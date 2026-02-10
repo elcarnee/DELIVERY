@@ -1,0 +1,71 @@
+<!-- PROFILE MODAL -->
+<div class="modal-overlay" id="profileModal" onclick="if(event.target === this) closeProfile()">
+    <div class="modal"
+        style="max-width: 800px; padding: 2rem; background: var(--vero-card); border: 1px solid rgba(255,255,255,0.1);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+            <h2 style="color:white; font-family:'Poppins',sans-serif;">Administración del Local</h2>
+            <button onclick="closeProfile()"
+                style="background:none; border:none; color:var(--gray); font-size:1.5rem; cursor:pointer;">✕</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:2rem;">
+            <!-- Left: Info & Account Actions -->
+            <div>
+                <h3 style="color:var(--vero-lime); margin-bottom:1rem;">Información</h3>
+                <div style="background:rgba(15,23,42,0.5); padding:1rem; border-radius:12px; margin-bottom:2rem;">
+                    <div style="margin-bottom:0.5rem; color:var(--gray); font-size:0.9rem;">Nombre del Restaurante</div>
+                    <div id="profileRestName" style="color:white; font-weight:600; font-size:1.1rem;">Cargando...</div>
+                </div>
+
+                <h3 style="color:var(--danger); margin-bottom:1rem;">Zona de Peligro</h3>
+                <div style="display:flex; flex-direction:column; gap:1rem;">
+                    <button onclick="handleLogout()"
+                        style="padding:1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:12px; cursor:pointer; text-align:left;">
+                        👋 Cerrar Sesión
+                    </button>
+                    <button onclick="deleteAccount()"
+                        style="padding:1rem; background:rgba(239,68,68,0.1); border:1px solid var(--danger); color:var(--danger); border-radius:12px; cursor:pointer; text-align:left;">
+                        🗑️ Eliminar Cuenta
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right: Menu Manager -->
+            <div style="border-left:1px solid rgba(255,255,255,0.1); padding-left:2rem;">
+                <h3 style="color:var(--vero-lime); margin-bottom:1rem;">Gestión de Menú</h3>
+
+                <!-- Add Product Form -->
+                <form onsubmit="addProduct(event)"
+                    style="background:rgba(15,23,42,0.5); padding:1rem; border-radius:12px; margin-bottom:1.5rem;">
+                    <div style="color:white; font-weight:600; margin-bottom:1rem;">Nuevo Producto</div>
+                    <input type="text" id="newProdName" placeholder="Nombre (ej: Pizza)" required
+                        style="width:100%; padding:0.5rem; margin-bottom:0.5rem; background:var(--vero-card); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:8px;">
+                    <input type="text" id="newProdDesc" placeholder="Descripción breve"
+                        style="width:100%; padding:0.5rem; margin-bottom:0.5rem; background:var(--vero-card); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:8px;">
+                    <div style="display:flex; gap:0.5rem;">
+                        <input type="number" id="newProdPrice" placeholder="Precio ($)" required
+                            style="flex:1; padding:0.5rem; background:var(--vero-card); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:8px;">
+                        <select id="newProdCat" required
+                            style="flex:1; padding:0.5rem; background:var(--vero-card); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:8px;">
+                            <option value="Pizzas">Pizzas</option>
+                            <option value="Empanadas">Empanadas</option>
+                            <option value="Bebidas">Bebidas</option>
+                            <option value="Postres">Postres</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                    <button type="submit"
+                        style="width:100%; margin-top:0.5rem; padding:0.5rem; background:var(--vero-lime); color:var(--vero-dark); border:none; border-radius:8px; font-weight:700; cursor:pointer;">
+                        + Agregar
+                    </button>
+                </form>
+
+                <!-- Product List -->
+                <div id="loadingMenu" style="display:none; color:var(--gray); text-align:center;">Cargando menú...</div>
+                <div id="menuList" style="max-height:300px; overflow-y:auto; padding-right:0.5rem;">
+                    <!-- JS renders items here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

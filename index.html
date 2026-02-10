@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0EA5E9">
+    <title>Delivery Comodoro - Pedí lo que quieras</title>
+
+    <!-- Fuentes distintivas -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --vero-dark: #0F172A;
+            --vero-card: #1E293B;
+            --vero-lime: #a3e635;
+            --vero-lime-hover: #84cc16;
+
+            --primary: #a3e635;
+            --primary-dark: #84cc16;
+            --primary-light: #bef264;
+            --accent: #F59E0B;
+            --success: #10B981;
+            --danger: #EF4444;
+            --dark: #0F172A;
+            --gray: #94a3b8;
+            --light: #F8FAFC;
+            --white: #FFFFFF;
+
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at center, #1e293b 0%, #0F172A 100%);
+            color: #F1F5F9;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Header con diseño distintivo */
+        .header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: slideInLeft 0.6s ease-out;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .logo-icon {
+            width: 56px;
+            height: 56px;
+            background: white;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
+        }
+
+        .logo-icon:hover {
+            transform: rotate(-5deg) scale(1.05);
+        }
+
+        .logo-text {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 800;
+            font-size: 1.75rem;
+            letter-spacing: -0.5px;
+        }
+
+        .location-badge {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .cart-button {
+            position: relative;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 0.75rem 1.25rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+            animation: slideInRight 0.6s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .cart-button:hover {
+            background: white;
+            color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .cart-count {
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            animation: pulse 0.5s ease;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+        }
+
+        /* Search Section */
+        .search-section {
+            max-width: 1400px;
+            margin: -30px auto 0;
+            padding: 0 1.5rem;
+            position: relative;
+            z-index: 10;
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .search-card {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+            color: var(--gray);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1.25rem 1.5rem 1.25rem 4.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            font-size: 1.125rem;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.3s ease;
+            background: rgba(15, 23, 42, 0.6);
+            color: white;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(15, 23, 42, 0.9);
+            box-shadow: 0 0 0 2px rgba(163, 230, 53, 0.2);
+        }
+
+        /* Categories */
+        .categories {
+            display: flex;
+            gap: 0.75rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+            padding-bottom: 0.5rem;
+        }
+
+        .categories::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-pill {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            white-space: nowrap;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease-out calc(0.3s + var(--delay)) both;
+        }
+
+        .category-pill:hover {
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .category-pill.active {
+            background: rgba(163, 230, 53, 0.15);
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1400px;
+            margin: 3rem auto;
+            padding: 0 1.5rem 6rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #F8FAFC;
+        }
+
+        /* Restaurants Grid */
+        .restaurants-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 2rem;
+        }
+
+        .restaurant-card {
+            background: #1E293B;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            animation: fadeInUp 0.6s ease-out calc(0.4s + var(--delay)) both;
+        }
+
+        .restaurant-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.4);
+            border-color: var(--primary);
+        }
+
+        .restaurant-image-wrapper {
+            position: relative;
+            height: 220px;
+            overflow: hidden;
+        }
+
+        .restaurant-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        .restaurant-card:hover .restaurant-image {
+            transform: scale(1.1);
+        }
+
+        .restaurant-badges {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: white;
+            color: var(--dark);
+            padding: 0.375rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+
+        .badge-popular {
+            background: var(--accent);
+            color: white;
+        }
+
+        .badge-new {
+            background: var(--success);
+            color: white;
+        }
+
+        .restaurant-rating {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--dark);
+            color: white;
+            padding: 0.5rem 0.875rem;
+            border-radius: 50px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            box-shadow: var(--shadow);
+        }
+
+        .restaurant-info {
+            padding: 1.5rem;
+        }
+
+        .restaurant-name {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.375rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #F8FAFC;
+        }
+
+        .restaurant-category {
+            color: var(--gray);
+            font-size: 0.9375rem;
+            margin-bottom: 1rem;
+        }
+
+        .restaurant-meta {
+            display: flex;
+            gap: 1.5rem;
+            color: var(--gray);
+            font-size: 0.875rem;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-weight: 500;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #1E293B;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 32px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            color: var(--light);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            position: relative;
+            height: 300px;
+            background: linear-gradient(135deg, var(--vero-dark) 0%, #1e293b 100%);
+            border-radius: 32px 32px 0 0;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            width: 48px;
+            height: 48px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            transform: rotate(90deg) scale(1.1);
+            background: var(--danger);
+            color: white;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .menu-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .menu-section-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: white;
+        }
+
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .menu-item:hover {
+            background: rgba(15, 23, 42, 0.8);
+            border-color: rgba(255, 255, 255, 0.1);
+            transform: translateX(8px);
+        }
+
+        .menu-item-info {
+            flex: 1;
+        }
+
+        .menu-item-name {
+            font-weight: 700;
+            font-size: 1.125rem;
+            margin-bottom: 0.375rem;
+        }
+
+        .menu-item-description {
+            color: var(--gray);
+            font-size: 0.9375rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .menu-item-price {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            font-size: 1.375rem;
+            color: var(--primary);
+        }
+
+        .add-button {
+            background: var(--primary);
+            color: var(--dark);
+            border: none;
+            padding: 0.875rem 1.75rem;
+            border-radius: 50px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .add-button:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .add-button:active {
+            transform: scale(0.98);
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 4rem;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--light);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--gray);
+        }
+
+        .empty-icon {
+            font-size: 5rem;
+            opacity: 0.3;
+            margin-bottom: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .logo-text {
+                font-size: 1.25rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .restaurants-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal {
+                border-radius: 24px 24px 0 0;
+                max-height: 95vh;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div>
+                <div class="logo">
+                    <span class="logo-text" style="font-size: 1.5rem;">VERO<span
+                            style="color: var(--vero-lime);">.</span> <span
+                            style="font-weight: 400; font-size: 1.4rem; margin-left: 5px; color: var(--gray);">Delivery</span></span>
+                </div>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <div id="authButtons">
+                    <div id="authButtons">
+                        <!-- JS Swaps this button -->
+                        <button class="cart-button" onclick="window.location.href='auth.html'"
+                            style="background: transparent; border-color: rgba(255,255,255,0.2); color: white;">
+                            👤 Ingresar
+                        </button>
+                        <!-- LOGGED IN STATE (Hidden by default) -->
+                        <button id="profileBtn" class="cart-button" onclick="openProfileModal()"
+                            style="display:none; background: rgba(163, 230, 53, 0.2); color: var(--vero-lime); border: 1px solid var(--vero-lime);">
+                            👤 Mi Perfil
+                        </button>
+                    </div>
+                </div>
+                <button class="cart-button" onclick="toggleCart()">
+                    <span>🛒</span>
+                    <span>Carrito</span>
+                    <span class="cart-count" id="cartCount">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Search Section -->
+    <section class="search-section">
+        <div class="search-card">
+            <div class="search-input-wrapper">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" id="searchInput"
+                    placeholder="Buscar restaurantes, pizzas, empanadas..." oninput="filterRestaurants()">
+            </div>
+            <div class="categories" id="categories">
+                <div class="category-pill active" style="--delay: 0s" onclick="filterCategory('all', this)">
+                    🍽️ Todos
+                </div>
+                <div class="category-pill" style="--delay: 0.05s" onclick="filterCategory('Pizza', this)">
+                    🍕 Pizzas
+                </div>
+                <div class="category-pill" style="--delay: 0.1s" onclick="filterCategory('Empanadas', this)">
+                    🥟 Empanadas
+                </div>
+                <div class="category-pill" style="--delay: 0.15s" onclick="filterCategory('Parrilla', this)">
+                    🥩 Parrilla
+                </div>
+                <div class="category-pill" style="--delay: 0.2s" onclick="filterCategory('Sushi', this)">
+                    🍣 Sushi
+                </div>
+                <div class="category-pill" style="--delay: 0.25s" onclick="filterCategory('Heladería', this)">
+                    🍦 Helados
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="section-header">
+            <h2 class="section-title">Restaurantes Disponibles</h2>
+        </div>
+
+        <div id="restaurantsContainer">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Restaurant Modal -->
+    <div class="modal-overlay" id="restaurantModal">
+        <div class="modal">
+            <div class="modal-header">
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body" id="modalContent">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div class="modal-overlay" id="cartModal">
+        <div class="modal">
+            <div class="modal-header" style="height: 100px; background: var(--primary);">
+                <h2
+                    style="color: white; margin: 0; position: absolute; bottom: 1.5rem; left: 2rem; font-family: 'Poppins', sans-serif;">
+                    Tu Pedido</h2>
+                <button class="modal-close" onclick="toggleCart()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="cartItemsContainer">
+                    <!-- Cart items loaded here -->
+                </div>
+
+                <div id="cartTotalSection"
+                    style="margin-top: 2rem; border-top: 1px solid var(--light); padding-top: 1.5rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <span style="font-size: 1.25rem; font-weight: 700;">Total</span>
+                        <span style="font-size: 1.5rem; font-weight: 700; color: var(--primary);"
+                            id="cartTotal">$0</span>
+                    </div>
+
+                    <div id="checkoutForm" style="display: none;">
+                        <h3 style="margin-bottom: 1rem;">Datos de envío</h3>
+                        <div style="display: grid; gap: 1rem; margin-bottom: 1.5rem;">
+                            <input type="text" id="customerName" placeholder="Tu Nombre" class="search-input"
+                                style="padding: 1rem;">
+                            <input type="tel" id="customerPhone" placeholder="Tu Teléfono" class="search-input"
+                                style="padding: 1rem;">
+                            <input type="text" id="customerAddress" placeholder="Dirección de entrega"
+                                class="search-input" style="padding: 1rem;">
+                            <select id="paymentMethod" class="search-input" style="padding: 1rem;">
+                                <option value="efectivo">Efectivo</option>
+                                <option value="transferencia">Transferencia</option>
+                                <option value="tarjeta">Tarjeta (MP)</option>
+                            </select>
+                            <textarea id="orderNotes" placeholder="Notas (opcional, ej: sin cebolla)"
+                                class="search-input" style="padding: 1rem; height: auto;" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <button id="checkoutButton" class="add-button"
+                        style="width: 100%; font-size: 1.125rem; padding: 1rem;" onclick="proceedToCheckout()">
+                        Continuar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Profile Modal -->
+    <div class="modal-overlay" id="profileModal" style="z-index: 200;">
+        <div class="modal" style="max-width: 800px;">
+            <div class="modal-header"
+                style="background: var(--card-bg); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <h2 style="color: white; font-family: 'Poppins', sans-serif;">Mi Perfil</h2>
+                <button class="modal-close" onclick="closeProfileModal()">✕</button>
+            </div>
+            <div class="modal-body">
+
+                <!-- Tabs -->
+                <div
+                    style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <button class="profile-tab active" onclick="switchProfileTab('data')"
+                        style="padding: 1rem; background:none; border:none; color:white; font-weight:600; cursor:pointer; border-bottom: 2px solid var(--primary);">Mis
+                        Datos</button>
+                    <button class="profile-tab" onclick="switchProfileTab('history')"
+                        style="padding: 1rem; background:none; border:none; color:var(--gray); font-weight:600; cursor:pointer;">Historial
+                        de Pedidos</button>
+                </div>
+
+                <!-- Tab: My Data -->
+                <div id="tab-data">
+                    <div style="display: grid; gap: 1.5rem;">
+                        <div>
+                            <label style="color:var(--gray); display:block; margin-bottom:0.5rem;">Nombre
+                                Completo</label>
+                            <input type="text" id="profileName" class="search-input" style="padding: 1rem;">
+                        </div>
+                        <div>
+                            <label style="color:var(--gray); display:block; margin-bottom:0.5rem;">Teléfono</label>
+                            <input type="tel" id="profilePhone" class="search-input" style="padding: 1rem;">
+                        </div>
+                        <div>
+                            <label style="color:var(--gray); display:block; margin-bottom:0.5rem;">Dirección
+                                Guardada</label>
+                            <input type="text" id="profileAddress" class="search-input" style="padding: 1rem;">
+                        </div>
+                        <button onclick="saveProfile()" class="add-button"
+                            style="padding: 1rem; width: auto; align-self: start;">
+                            💾 Guardar Cambios
+                        </button>
+
+                        <div style="margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 2rem;">
+                            <button onclick="logout()"
+                                style="background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); padding: 1rem; border-radius: 12px; cursor: pointer; width: 100%;">
+                                👋 Cerrar Sesión
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: History -->
+                <div id="tab-history" style="display: none;">
+                    <div id="historyList" style="display: flex; flex-direction: column; gap: 1rem;">
+                        <!-- JS loads orders here -->
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <!-- Flavor Selection Modal -->
+    <div class="modal-overlay" id="flavorModal" onclick="if(event.target === this) closeFlavorModal()">
+        <div class="modal" style="max-width: 400px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.5rem;">
+                <h2 class="section-title" style="margin-bottom: 0;">Elige una opción</h2>
+                <button onclick="closeFlavorModal()"
+                    style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+
+            <div id="flavorList" style="display:flex; flex-direction:column; gap:0.75rem; margin-bottom:1.5rem;">
+                <!-- Options rendered here -->
+            </div>
+
+            <button onclick="confirmFlavor()" class="btn-primary" style="width:100%;">
+                Confirmar y Agregar
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast"
+        style="position: fixed; bottom: 20px; right: 20px; background: var(--success); color: var(--vero-dark); padding: 1rem 2rem; border-radius: 12px; font-weight: 700; transform: translateY(100px); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2000; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
+        Producto Agregado 🛒
+    </div>
+
+    <script>
+        // ==========================================
+        // CONFIGURACIÓN DE SUPABASE
+        // ==========================================
+        // ⚠️ IMPORTANTE: Reemplazar con TUS credenciales de Supabase
+        const SUPABASE_URL = 'https://dsxtpgkdxkplwhrvbotg.supabase.co'; // Ej: https://xxxxx.supabase.co
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzeHRwZ2tkeGtwbHdocnZib3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5NjE2MzcsImV4cCI6MjA4NTUzNzYzN30.nY-PrzOyfmniy_nzZYIq36GWTwcb4ENIchOOA7cbc18'; // Tu clave pública (anon/public)
+
+        let supabaseClient;
+        let allRestaurants = [];
+        let currentRestaurantId = null;
+        let cart = JSON.parse(localStorage.getItem('delivery_cart')) || [];
+
+        // ==========================================
+        // CARRITO & FLAVORS
+        // ==========================================
+        let pendingItem = null; // Store item waiting for flavor
+
+        function addToCart(itemId, itemName, price, restaurantId, optionsStr, limit = 1) {
+            // Verificar si es del mismo restaurante
+            if (currentRestaurantId && currentRestaurantId !== restaurantId && cart.length > 0) {
+                if (!confirm('Solo puedes pedir de un restaurante a la vez. ¿Quieres vaciar el carrito y empezar un nuevo pedido de este restaurante?')) {
+                    return;
+                }
+                cart = [];
+            }
+
+            // Check for options
+            if (optionsStr && optionsStr.trim() !== '') {
+                openFlavorModal(itemId, itemName, price, restaurantId, optionsStr, limit);
+                return;
+            }
+
+            addItemToCart(itemId, itemName, price, restaurantId);
+        }
+
+        function openFlavorModal(id, name, price, restaurantId, optionsStr, limit) {
+            pendingItem = { id, name, price, restaurantId, limit };
+            const options = optionsStr.split(',').map(s => s.trim());
+            const container = document.getElementById('flavorList');
+            const title = document.querySelector('#flavorModal h2');
+
+            if (limit > 1) {
+                // COUNTERS MODE
+                title.innerText = `Elige hasta ${limit} opciones`;
+                container.innerHTML = options.map((opt, i) => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:rgba(255,255,255,0.05); border-radius:8px;">
+                        <span style="color:white; font-size:1rem;">${opt}</span>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <button onclick="updateFlavorCount(this, -1)" style="width:30px; height:30px; border-radius:50%; border:none; background:rgba(255,255,255,0.1); color:white; font-size:1.2rem; cursor:pointer;">-</button>
+                            <span class=" flavor-count" data-flavor="${opt}">0</span>
+                            <button onclick="updateFlavorCount(this, 1)" style="width:30px; height:30px; border-radius:50%; border:none; background:var(--primary); color:#0F172A; font-weight:bold; font-size:1.2rem; cursor:pointer;">+</button>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                // RADIO BUTTON MODE
+                title.innerText = `Elige una opción`;
+                container.innerHTML = options.map((opt, i) => `
+                    <label style="display:flex; align-items:center; gap:10px; padding:10px; background:rgba(255,255,255,0.05); border-radius:8px; cursor:pointer;">
+                        <input type="radio" name="flavor" value="${opt}" ${i === 0 ? 'checked' : ''} style="accent-color:var(--primary);">
+                        <span style="color:white; font-size:1rem;">${opt}</span>
+                    </label>
+                `).join('');
+            }
+
+            document.getElementById('flavorModal').classList.add('active');
+        }
+
+        function updateFlavorCount(btn, delta) {
+            if (!pendingItem) return;
+            const countSpan = btn.parentElement.querySelector('.flavor-count');
+            let current = parseInt(countSpan.innerText);
+
+            // Check totals
+            const allCounts = Array.from(document.querySelectorAll('.flavor-count'))
+                .reduce((sum, el) => sum + parseInt(el.innerText), 0);
+
+            if (delta > 0 && allCounts >= pendingItem.limit) {
+                return; // Reached limit
+            }
+            if (delta < 0 && current === 0) return;
+
+            countSpan.innerText = current + delta;
+        }
+
+        function closeFlavorModal() {
+            document.getElementById('flavorModal').classList.remove('active');
+            pendingItem = null;
+        }
+
+        function confirmFlavor() {
+            if (!pendingItem) return;
+            let finalName = pendingItem.name;
+
+            if (pendingItem.limit > 1) {
+                // Gather counters
+                const selected = [];
+                document.querySelectorAll('.flavor-count').forEach(el => {
+                    const count = parseInt(el.innerText);
+                    if (count > 0) {
+                        const flavor = el.getAttribute('data-flavor');
+                        selected.push(`${count}x ${flavor}`);
+                    }
+                });
+
+                if (selected.length === 0) {
+                    alert('Debes elegir al menos una opción');
+                    return;
+                }
+                finalName += ` (${selected.join(', ')})`;
+            } else {
+                // Gather Radio
+                const selected = document.querySelector('input[name="flavor"]:checked');
+                if (!selected) {
+                    alert('Por favor elige una opción');
+                    return;
+                }
+                finalName += ` (${selected.value})`;
+            }
+
+            addItemToCart(pendingItem.id, finalName, pendingItem.price, pendingItem.restaurantId);
+            closeFlavorModal();
+        }
+
+        function addItemToCart(itemId, itemName, price, restaurantId) {
+            currentRestaurantId = restaurantId;
+
+            const existingItem = cart.find(i => i.id === itemId && i.name === itemName); // Match name too (for different flavors)
+            if (existingItem) {
+                existingItem.quantity++;
+            } else {
+                cart.push({
+                    id: itemId,
+                    name: itemName,
+                    price: price,
+                    quantity: 1,
+                    restaurantId: restaurantId
+                });
+            }
+
+            saveCart();
+            updateCartUI();
+            showNotification(`${itemName} agregado al carrito`);
+        }
+
+        function removeFromCart(itemId) {
+            const index = cart.findIndex(i => i.id === itemId);
+            if (index > -1) {
+                if (cart[index].quantity > 1) {
+                    cart[index].quantity--;
+                } else {
+                    cart.splice(index, 1);
+                }
+            }
+
+            if (cart.length === 0) currentRestaurantId = null;
+            saveCart();
+            renderCart();
+            updateCartUI();
+        }
+
+        function saveCart() {
+            localStorage.setItem('delivery_cart', JSON.stringify(cart));
+            localStorage.setItem('delivery_restaurant', currentRestaurantId);
+        }
+
+        function updateCartUI() {
+            const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cartCount').innerText = count;
+
+            // Animación
+            const badge = document.getElementById('cartCount');
+            badge.style.transform = 'scale(1.2)';
+            setTimeout(() => badge.style.transform = 'scale(1)', 200);
+        }
+
+        function toggleCart() {
+            const modal = document.getElementById('cartModal');
+            if (modal.classList.contains('active')) {
+                modal.classList.remove('active');
+            } else {
+                renderCart();
+                modal.classList.add('active');
+            }
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cartItemsContainer');
+            const totalElement = document.getElementById('cartTotal');
+
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🛒</div>
+                        <h3>Tu carrito está vacío</h3>
+                        <p>Agrega productos de tus restaurantes favoritos</p>
+                    </div>
+                `;
+                totalElement.innerText = '$0';
+                document.getElementById('checkoutButton').style.display = 'none';
+                document.getElementById('checkoutForm').style.display = 'none';
+                return;
+            }
+
+            let total = 0;
+            container.innerHTML = cart.map(item => {
+                const subtotal = item.price * item.quantity;
+                total += subtotal;
+                return `
+                    <div class="menu-item" style="padding: 1rem;">
+                        <div class="menu-item-info">
+                            <div class="menu-item-name">${item.name}</div>
+                            <div class="menu-item-price">$${formatPrice(subtotal)}</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <button onclick="removeFromCart('${item.id}')" style="background:#e2e8f0; border:none; width:30px; height:30px; border-radius:50%; font-weight:bold; cursor:pointer;">-</button>
+                            <span style="font-weight:600">${item.quantity}</span>
+                            <button onclick="addToCart('${item.id}', '${item.name}', ${item.price}, '${item.restaurantId}')" style="background:var(--primary); color:white; border:none; width:30px; height:30px; border-radius:50%; font-weight:bold; cursor:pointer;">+</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            totalElement.innerText = '$' + formatPrice(total);
+            document.getElementById('checkoutButton').style.display = 'block';
+        }
+
+        // ==========================================
+        // CHECKOUT
+        // ==========================================
+        let isCheckingOut = false;
+
+        function proceedToCheckout() {
+            const form = document.getElementById('checkoutForm');
+            const btn = document.getElementById('checkoutButton');
+
+            if (form.style.display === 'none') {
+                form.style.display = 'block';
+                btn.innerText = 'Confirmar Pedido';
+
+
+                // Auto-fill from Profile if logged in
+                if (window.PROFILE_ID) {
+                    const pName = document.getElementById('profileName').value;
+                    const pPhone = document.getElementById('profilePhone').value;
+                    const pAddr = document.getElementById('profileAddress').value;
+
+                    if (pName) document.getElementById('customerName').value = pName;
+                    if (pPhone) document.getElementById('customerPhone').value = pPhone;
+                    if (pAddr) document.getElementById('customerAddress').value = pAddr;
+                }
+            } else {
+                submitOrder();
+            }
+        }
+
+        async function submitOrder() {
+            if (isCheckingOut) return;
+
+            const name = document.getElementById('customerName').value;
+            const phone = document.getElementById('customerPhone').value;
+            const address = document.getElementById('customerAddress').value;
+            const payment = document.getElementById('paymentMethod').value;
+            const notes = document.getElementById('orderNotes').value;
+
+            if (!name || !phone || !address) {
+                alert('Por favor completa todos los campos de envío');
+                return;
+            }
+
+            isCheckingOut = true;
+            const btn = document.getElementById('checkoutButton');
+            const originalText = btn.innerText;
+            btn.innerText = 'Enviando...';
+            btn.disabled = true;
+
+            try {
+                if (!window.PROFILE_ID) {
+                    throw new Error("No se ha cargado el perfil del cliente. Por favor recarga la página.");
+                }
+
+                const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                const orderNumber = '#' + Math.floor(100000 + Math.random() * 900000);
+
+                const restaurant = allRestaurants.find(r => r.id === currentRestaurantId);
+                const costoEnvio = restaurant ? restaurant.costo_envio : 0;
+
+                // 1. Crear Pedido
+                const { data: order, error: orderError } = await supabaseClient
+                    .from('pedidos')
+                    .insert({
+                        restaurante_id: currentRestaurantId,
+                        cliente_id: window.PROFILE_ID, // Use Client Profile ID (matches 'clientes' table)
+                        numero_pedido: orderNumber,
+                        cliente_nombre: name,
+                        cliente_telefono: phone,
+                        cliente_direccion: address,
+                        metodo_pago: payment,
+                        notas: notes,
+                        total: total,
+                        subtotal: total, // DB requires subtotal
+                        costo_envio: costoEnvio,
+                        estado: 'pendiente'
+                    })
+                    .select()
+                    .single();
+
+                if (orderError) throw orderError;
+
+                // 2. Crear Items
+                const orderItems = cart.map(item => ({
+                    pedido_id: order.id,
+                    nombre: item.name,
+                    cantidad: item.quantity,
+                    precio_unitario: item.price,
+                    subtotal: item.price * item.quantity
+                }));
+
+                const { error: itemsError } = await supabaseClient
+                    .from('pedido_items')
+                    .insert(orderItems);
+
+                if (itemsError) throw itemsError;
+
+                // Éxito
+                cart = [];
+                currentRestaurantId = null;
+                saveCart();
+                updateCartUI();
+                toggleCart();
+
+                alert(`¡Pedido ${orderNumber} enviado con éxito! Te avisaremos cuando sea aceptado.`);
+
+            } catch (error) {
+                console.error('Error enviando pedido:', error);
+                alert('Error detallado: ' + (error.message || JSON.stringify(error)));
+            } finally {
+                isCheckingOut = false;
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        let currentCategory = 'all';
+
+        // Inicializar Supabase y Auth
+        function initSupabase() {
+            if (SUPABASE_URL === 'TU_SUPABASE_URL_AQUI') {
+                console.warn('⚠️ Configurá tus credenciales de Supabase en el código');
+                loadMockData();
+                return false;
+            }
+
+            try {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+                    auth: {
+                        persistSession: true,
+                        storage: window.sessionStorage,
+                        autoRefreshToken: true,
+                        detectSessionInUrl: true
+                    }
+                });
+
+                // Check Session Status using new logic
+                // updateAuthUI(); // REMOVED LEGACY CALL
+
+                return true;
+            } catch (error) {
+                console.error('Error inicializando Supabase:', error);
+                loadMockData();
+                return false;
+            }
+        }
+
+        // REMOVED LEGACY AUTH UI FUNCTIONS
+        // updateAuthUI and handleLogout replaced by checkSession and logout
+
+        // ==========================================
+        // CARGAR RESTAURANTES
+        // ==========================================
+        async function loadRestaurants() {
+            const container = document.getElementById('restaurantsContainer');
+
+            if (supabaseClient) {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('restaurantes')
+                        .select('*')
+                        .eq('activo', true)
+                        .eq('acepta_pedidos', true)
+                        .order('calificacion', { ascending: false });
+
+                    if (error) throw error;
+
+                    // SMART UPDATE: Only re-render if data actually changed
+                    // We compare the ID and basic status of restaurants to detect changes
+                    const currentIds = allRestaurants.map(r => r.id + r.acepta_pedidos).join(',');
+                    const newIds = data.map(r => r.id + r.acepta_pedidos).join(',');
+
+                    if (currentIds !== newIds) {
+                        console.log('🔄 Cambios detectados en restaurantes, actualizando UI...');
+                        allRestaurants = data;
+                        renderRestaurants(allRestaurants);
+                    } else {
+                        // console.log('💤 Sin cambios, UI estable');
+                    }
+
+                } catch (error) {
+                    console.error('Error cargando restaurantes:', error);
+                    // Only show error if we have no data at all
+                    if (allRestaurants.length === 0) showError(container);
+                }
+            } else {
+                renderRestaurants(allRestaurants);
+            }
+        }
+
+        // ==========================================
+        // RENDERIZAR RESTAURANTES
+        // ==========================================
+        function renderRestaurants(restaurants) {
+            const container = document.getElementById('restaurantsContainer');
+
+            if (restaurants.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">😔</div>
+                        <h3>No encontramos restaurantes</h3>
+                        <p>Intenta con otra búsqueda o categoría</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="restaurants-grid">
+                    ${restaurants.map((r, i) => `
+                        <div class="restaurant-card" style="--delay: ${i * 0.05}s" onclick="openRestaurant('${r.id}')">
+                            <div class="restaurant-image-wrapper">
+                                <img src="${r.imagen_url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400'}" 
+                                     alt="${r.nombre}" 
+                                     class="restaurant-image">
+                                <div class="restaurant-badges">
+                                    ${r.calificacion >= 4.7 ? '<span class="badge badge-popular">Popular</span>' : ''}
+                                    ${isNew(r.created_at) ? '<span class="badge badge-new">Nuevo</span>' : ''}
+                                </div>
+                                <div class="restaurant-rating">
+                                    ⭐ ${r.calificacion.toFixed(1)}
+                                </div>
+                            </div>
+                            <div class="restaurant-info">
+                                <h3 class="restaurant-name">${r.nombre}</h3>
+                                <p class="restaurant-category">${r.descripcion || r.categoria}</p>
+                                <div class="restaurant-meta">
+                                    <span class="meta-item">
+                                        🕒 ${r.horarios || 'Consultar'}
+                                    </span>
+                                    <span class="meta-item">
+                                        🕐 ${r.tiempo_preparacion} min
+                                    </span>
+                                    <span class="meta-item">
+                                        🛵 $${r.costo_envio}
+                                    </span>
+                                    <span class="meta-item">
+                                        📍 <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.direccion || r.zona)}" target="_blank" style="color:inherit; text-decoration:none; hover:underline;">
+                                            ${r.direccion || r.zona}
+                                        </a>
+                                    </span>
+                                </div>
+                                <div style="font-size:0.7rem; color:#ccc; margin-top:0.5rem;">ID: ${r.id.slice(0, 8)}...</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // ==========================================
+        // ABRIR RESTAURANTE
+        // ==========================================
+        async function openRestaurant(id) {
+            const modal = document.getElementById('restaurantModal');
+            const content = document.getElementById('modalContent');
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            content.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                // Obtener restaurante
+                const { data: restaurant, error: restError } = await supabaseClient
+                    .from('restaurantes')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+
+                if (restError) throw restError;
+
+                // Obtener menú
+                const { data: menuItems, error: menuError } = await supabaseClient
+                    .from('menu_items')
+                    .select('*')
+                    .eq('restaurante_id', id)
+                    .eq('disponible', true)
+                    .order('categoria', { ascending: true });
+
+                if (menuError) throw menuError;
+
+                // Agrupar por categoría
+                const menuByCategory = menuItems.reduce((acc, item) => {
+                    if (!acc[item.categoria]) acc[item.categoria] = [];
+                    acc[item.categoria].push(item);
+                    return acc;
+                }, {});
+
+                content.innerHTML = `
+                    <div style="margin-bottom: 2rem;">
+                        <h1 style="font-family: 'Poppins', sans-serif; font-size: 2.5rem; font-weight: 700; margin-bottom: 0.75rem;">
+                            ${restaurant.nombre}
+                        </h1>
+                        <p style="color: var(--gray); font-size: 1.125rem; margin-bottom: 1rem;">
+                            ${restaurant.descripcion}
+                        </p>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap; color: var(--gray);">
+                            <span style="display: flex; align-items: center; gap: 0.5rem;">
+                                ⭐ ${restaurant.calificacion.toFixed(1)} (${restaurant.total_calificaciones} reseñas)
+                            </span>
+                            <span>🕐 ${restaurant.tiempo_preparacion} min</span>
+                            <span>🛵 $${restaurant.costo_envio}</span>
+                            <span>
+                                📍 <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.direccion || restaurant.zona)}" target="_blank" style="color:var(--primary); text-decoration:none;">
+                                    ${restaurant.direccion || restaurant.zona}
+                                </a>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    ${Object.keys(menuByCategory).length === 0 ? `
+                        <div class="empty-state">
+                            <div class="empty-icon">📋</div>
+                            <h3>Sin menú disponible</h3>
+                            <p>Este restaurante aún no ha cargado su menú</p>
+                        </div>
+                    ` : Object.keys(menuByCategory).map(category => `
+                        <div class="menu-section">
+                            <h3 class="menu-section-title">${category}</h3>
+                            ${menuByCategory[category].map(item => `
+                                <div class="menu-item" style="display: flex; gap: 1rem; align-items: center;">
+                                    ${item.imagen_url ? `
+                                        <img src="${item.imagen_url}" alt="${item.nombre}" 
+                                             style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+                                    ` : ''}
+                                    <div class="menu-item-info" style="flex: 1;">
+                                        <div class="menu-item-name">${item.nombre}</div>
+                                        <div class="menu-item-description">${item.descripcion || ''}</div>
+                                        <div class="menu-item-price">$${formatPrice(item.precio)}</div>
+                                    </div>
+                                    <button class="add-button" onclick="addToCart('${item.id}', '${item.nombre}', ${item.precio}, '${restaurant.id}', '${(item.opciones || '').replace(/'/g, "\\'")}', ${item.limite_opciones || 1})">
+                                        Agregar
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `).join('')}
+                `;
+            } catch (error) {
+                console.error('Error cargando restaurante:', error);
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">❌</div>
+                        <h3>Error al cargar</h3>
+                        <p>Intenta nuevamente más tarde</p>
+                    </div>
+                `;
+            }
+        }
+
+        function subscribeToRestaurants() {
+            if (!supabaseClient) return;
+
+            console.log('📡 Suscribiendo a cambios en restaurantes...');
+            supabaseClient
+                .channel('public:restaurantes')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'restaurantes' }, payload => {
+                    // Reload list on any change
+                    loadRestaurants();
+                })
+                .subscribe();
+        }
+
+        // ==========================================
+        // FILTROS
+        // ==========================================
+        function filterCategory(category, element) {
+            currentCategory = category;
+
+            // Update active state
+            document.querySelectorAll('.category-pill').forEach(pill => {
+                pill.classList.remove('active');
+            });
+            element.classList.add('active');
+
+            filterRestaurants();
+        }
+
+        function filterRestaurants() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            let filtered = allRestaurants.filter(r => {
+                const matchesSearch = r.nombre.toLowerCase().includes(searchTerm) ||
+                    r.descripcion?.toLowerCase().includes(searchTerm) ||
+                    r.categoria.toLowerCase().includes(searchTerm);
+
+                const matchesCategory = currentCategory === 'all' ||
+                    r.categoria === currentCategory;
+
+                return matchesSearch && matchesCategory;
+            });
+
+            renderRestaurants(filtered);
+        }
+
+        // ==========================================
+        // UTILIDADES
+        // ==========================================
+        function closeModal() {
+            document.getElementById('restaurantModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function formatPrice(price) {
+            return Number(price).toLocaleString('es-AR');
+        }
+
+        function isNew(createdAt) {
+            const created = new Date(createdAt);
+            const now = new Date();
+            const diffDays = (now - created) / (1000 * 60 * 60 * 24);
+            return diffDays < 30;
+        }
+
+        function showNotification(message) {
+            alert(message); // Mejorar con una notificación real
+        }
+
+
+
+        function showError(container) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">⚠️</div>
+                    <h3>Error de conexión</h3>
+                    <p>Verifica tu conexión a Supabase</p>
+                </div>
+                `;
+        }
+
+        // ==========================================
+        // DATOS DE EJEMPLO (MOCK)
+        // ==========================================
+        function loadMockData() {
+            allRestaurants = [
+                {
+                    id: '1',
+                    nombre: 'Del Marqués Sushi',
+                    descripcion: 'Sushi fresco y de calidad',
+                    categoria: 'Sushi',
+                    direccion: 'Av. Quintana 151',
+                    zona: 'Km3',
+                    imagen_url: 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400',
+                    tiempo_preparacion: 40,
+                    costo_envio: 500,
+                    calificacion: 4.8,
+                    total_calificaciones: 124,
+                    activo: true,
+                    acepta_pedidos: true,
+                    created_at: '2024-01-15'
+                },
+                {
+                    id: '2',
+                    nombre: 'Puerto Mitre',
+                    descripcion: 'Las mejores pizzas de Comodoro',
+                    categoria: 'Pizza',
+                    direccion: 'Centro Km3',
+                    zona: 'Km3',
+                    imagen_url: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400',
+                    tiempo_preparacion: 30,
+                    costo_envio: 400,
+                    calificacion: 4.9,
+                    total_calificaciones: 234,
+                    activo: true,
+                    acepta_pedidos: true,
+                    created_at: '2023-10-20'
+                },
+                {
+                    id: '3',
+                    nombre: 'Las Brasas',
+                    descripcion: 'Rotisería y Parrilla',
+                    categoria: 'Parrilla',
+                    direccion: 'Av. Tehuelches 199',
+                    zona: 'Km3',
+                    imagen_url: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400',
+                    tiempo_preparacion: 35,
+                    costo_envio: 500,
+                    calificacion: 4.6,
+                    total_calificaciones: 156,
+                    activo: true,
+                    acepta_pedidos: true,
+                    created_at: '2023-08-10'
+                }
+            ];
+        }
+
+        // ==========================================
+        // INICIALIZAR
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            const hasSupabase = initSupabase();
+            if (hasSupabase) {
+                checkSession(); // Check user session
+                subscribeToRestaurants();
+
+                // Polling Fallback (faster: every 3 seconds) for near-instant updates
+                setInterval(() => {
+                    loadRestaurants();
+                }, 3000);
+            }
+            loadRestaurants();
+
+            if (!hasSupabase) {
+                console.log('📝 Usando datos de ejemplo. Configurá Supabase para datos reales.');
+            }
+        });
+
+        // Cerrar modal al hacer clic fuera
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                    document.body.style.overflow = 'auto';
+                }
+            });
+        });
+
+        // ==========================================
+        // PROFILE LOGIC
+        // ==========================================
+        let USER_ID = null;
+        let PROFILE_ID = null;
+
+        async function checkSession() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                document.querySelector('#authButtons button').style.display = 'none';
+                document.getElementById('profileBtn').style.display = 'block';
+
+                window.USER_ID = session.user.id;
+
+                // 1. Try to fetch existing profile (Robust against duplicates)
+                console.log("🔍 Buscando perfil para:", session.user.id);
+                let { data: clients, error } = await supabaseClient
+                    .from('clientes')
+                    .select('*')
+                    .eq('usuario_id', session.user.id)
+                    .limit(1); // Take only the first one if duplicates exist
+
+                if (error) console.error("❌ Error buscando perfil:", error);
+
+                let client = clients && clients.length > 0 ? clients[0] : null;
+
+                // 2. If not found, create it (upsert)
+                if (!client) {
+                    console.log('⚠️ Perfil no visible/encontrado. Intentando crear o recuperar...');
+                    const { data: user } = await supabaseClient.from('usuarios').select('nombre').eq('id', session.user.id).single();
+
+                    const { data: newClient, error: createError } = await supabaseClient
+                        .from('clientes')
+                        .upsert({
+                            id: session.user.id, // FORCE ID sync
+                            usuario_id: session.user.id,
+                            nombre: user ? user.nombre : 'Usuario'
+                            // REMOVED telefono and direccion to prevent overwriting existing data
+                        }, { onConflict: 'id' }) // Prevent duplicates
+                        .select()
+                        .single();
+
+                    if (createError) console.error("❌ Error creando perfil:", createError);
+                    client = newClient;
+                }
+
+                if (client) {
+                    console.log("✅ Perfil cargado:", client);
+                    window.PROFILE_ID = client.id;
+                    document.getElementById('profileName').value = client.nombre || '';
+                    document.getElementById('profilePhone').value = client.telefono || '';
+                    document.getElementById('profileAddress').value = client.direccion || '';
+                }
+            }
+        }
+
+        function openProfileModal() {
+            document.getElementById('profileModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            if (window.PROFILE_ID) loadHistory(); // Use PROFILE_ID for history
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function switchProfileTab(tab) {
+            const btnData = document.querySelectorAll('.profile-tab')[0];
+            const btnHistory = document.querySelectorAll('.profile-tab')[1];
+            const tabData = document.getElementById('tab-data');
+            const tabHistory = document.getElementById('tab-history');
+
+            if (tab === 'data') {
+                btnData.classList.add('active'); btnData.style.borderBottom = '2px solid var(--primary)'; btnData.style.color = 'white';
+                btnHistory.classList.remove('active'); btnHistory.style.borderBottom = 'none'; btnHistory.style.color = 'var(--gray)';
+                tabData.style.display = 'block';
+                tabHistory.style.display = 'none';
+            } else {
+                btnHistory.classList.add('active'); btnHistory.style.borderBottom = '2px solid var(--primary)'; btnHistory.style.color = 'white';
+                btnData.classList.remove('active'); btnData.style.borderBottom = 'none'; btnData.style.color = 'var(--gray)';
+                tabData.style.display = 'none';
+                tabHistory.style.display = 'block';
+                if (window.PROFILE_ID) loadHistory();
+            }
+        }
+
+        async function saveProfile() {
+            const name = document.getElementById('profileName').value;
+            const phone = document.getElementById('profilePhone').value;
+            const address = document.getElementById('profileAddress').value;
+
+            if (!window.USER_ID) {
+                alert('No hay sesión activa');
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient
+                    .from('clientes')
+                    .update({
+                        nombre: name,
+                        telefono: phone,
+                        direccion: address
+                    })
+                    .eq('usuario_id', window.USER_ID);
+
+                if (error) throw error;
+                alert('✅ Datos guardados');
+            } catch (error) {
+                console.error(error);
+                alert('Error guardando datos');
+            }
+        }
+
+        async function loadHistory() {
+            const container = document.getElementById('historyList');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                const { data: orders, error } = await supabaseClient
+                    .from('pedidos')
+                    .select('*, restaurantes(nombre)')
+                    .eq('cliente_id', window.PROFILE_ID) // Use Client Profile ID
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (orders.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><p>No has hecho pedidos aún</p></div>';
+                    return;
+                }
+
+                container.innerHTML = orders.map(o => `
+                < div style = "background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);" >
+                        <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                            <span style="font-weight:bold; color:white;">${o.restaurantes?.nombre || 'Restaurante'}</span>
+                            <span style="color:var(--gray); font-size:0.9rem;">${new Date(o.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="badge" style="background:${getStatusColor(o.estado)}; color:white; padding:0.25rem 0.75rem; border-radius:99px; font-size:0.8rem;">
+                                ${o.estado.toUpperCase()}
+                            </span>
+                            <span style="font-weight:bold; color:var(--primary);">$${formatPrice(o.total)}</span>
+                        </div>
+                        ${o.estado === 'entregado' ? `
+                            <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.1); display:flex; gap:1rem;">
+                                <button onclick="rateOrder('${o.id}', 'restaurant')" style="flex:1; padding:0.5rem; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer;">⭐ Calificar Local</button>
+                                <button onclick="rateOrder('${o.id}', 'driver')" style="flex:1; padding:0.5rem; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer;">🛵 Calificar Repartidor</button>
+                            </div>
+                        ` : ''
+                    }
+                    </div >
+                `).join('');
+
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = '<p style="color:red">Error cargando historial</p>';
+            }
+        }
+
+        function getStatusColor(status) {
+            switch (status) {
+                case 'pendiente': return 'var(--accent)';
+                case 'preparando': return '#3b82f6';
+                case 'en_camino': return '#8b5cf6';
+                case 'entregado': return 'var(--success)';
+                default: return 'var(--gray)';
+            }
+        }
+
+        // Placeholder for Rating (Future implementation: Modal or Prompt)
+        function rateOrder(orderId, type) {
+            const rating = prompt(`Calificar ${type === 'restaurant' ? 'Restaurante' : 'Repartidor'} (1 - 5): `);
+            if (rating && rating >= 1 && rating <= 5) {
+                alert(`¡Gracias por tu calificación de ${rating} estrellas!`);
+                // Here we would sync with DB
+            }
+        }
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            window.location.reload();
+        }
+    </script>
+</body>
+
+</html>

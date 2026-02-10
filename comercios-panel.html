@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Comercios - Delivery Comodoro</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --vero-dark: #0F172A;
+            --vero-card: #1E293B;
+            --vero-lime: #a3e635;
+            --vero-lime-hover: #84cc16;
+            --primary: #a3e635;
+            --primary-dark: #84cc16;
+            --accent: #F59E0B;
+            --success: #10B981;
+            --danger: #EF4444;
+            --dark: #0F172A;
+            --gray: #94a3b8;
+            --light: #1E293B;
+            /* Re-mapped light to dark card for backgrounds */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: radial-gradient(circle at center, #1e293b 0%, #0F172A 100%);
+            color: #F8FAFC;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 1.5rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 2rem;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            background: rgba(30, 41, 59, 0.6);
+            padding: 0.5rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 1rem;
+            border: 1px solid transparent;
+            background: transparent;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--gray);
+        }
+
+        .tab.active {
+            background: rgba(163, 230, 53, 0.1);
+            color: var(--vero-lime);
+            border-color: var(--vero-lime);
+        }
+
+        .orders-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .order-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            color: #F8FAFC;
+        }
+
+        .order-card:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .order-card.pending {
+            border-left-color: var(--accent);
+        }
+
+        .order-card.preparing {
+            border-left-color: #3B82F6;
+        }
+
+        .order-card.ready {
+            border-left-color: var(--success);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1.5rem;
+        }
+
+        .order-number {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .order-time {
+            color: var(--gray);
+            font-size: 0.875rem;
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .status-pending {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .status-preparing {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .status-ready {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .order-items {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 1.25rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+        }
+
+        .item-name {
+            font-weight: 600;
+        }
+
+        .item-quantity {
+            color: var(--gray);
+            margin-right: 1rem;
+        }
+
+        .customer-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            padding: 1rem 0;
+            border-top: 1px solid var(--light);
+            border-bottom: 1px solid var(--light);
+            margin: 1rem 0;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: start;
+            gap: 0.5rem;
+        }
+
+        .info-label {
+            color: var(--gray);
+            font-size: 0.875rem;
+        }
+
+        .order-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+        }
+
+        .total-label {
+            font-weight: 600;
+            color: var(--gray);
+        }
+
+        .total-amount {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--vero-lime);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-accept {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-ready {
+            background: #3B82F6;
+            color: white;
+        }
+
+        .btn-reject {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 20px;
+            color: var(--gray);
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        .empty-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--light);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-bar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                VERO<span style="color: var(--vero-lime);">.</span> <span
+                    style="font-weight: 400; font-size: 1.2rem; margin-left: 5px; color: var(--gray);">Comercios</span>
+            </div>
+            <div class="stats-bar">
+                <div class="stat">
+                    <div class="stat-value" id="pendingCount">0</div>
+                    <div class="stat-label">Pendientes</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="todayCount">0</div>
+                    <div class="stat-label">Hoy</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="totalAmount">$0</div>
+                    <div class="stat-label">Total</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="filterOrders('pending')">
+                ⏳ Pendientes
+            </button>
+            <button class="tab" onclick="filterOrders('preparing')">
+                👨‍🍳 Preparando
+            </button>
+            <button class="tab" onclick="filterOrders('ready')">
+                ✅ Listos
+            </button>
+            <button class="tab" onclick="filterOrders('all')">
+                📋 Todos
+            </button>
+            <button class="tab" onclick="openProfileTab()">
+                👤 Mi Perfil
+            </button>
+        </div>
+
+        <div id="ordersContainer">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- PROFILE CONTAINER (Initially Hidden) -->
+        <div id="profileContainer" style="display:none; animation: fadeIn 0.3s ease;">
+
+            <!-- Header: Centered Restaurant Name -->
+            <div
+                style="text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1.5rem; margin-bottom: 2rem;">
+                <h2 id="profileRestName"
+                    style="color:white; font-family:'Poppins',sans-serif; font-size: 2.5rem; margin-bottom: 0.5rem;">
+                    Cargando...</h2>
+                <div style="color: var(--vero-lime); font-weight: 500; font-size: 1.1rem;">Administración del Local
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:2rem;">
+
+                <!-- Left: Menu Manager -->
+                <div>
+                    <h3
+                        style="color:white; margin-bottom:1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1.25rem;">
+                        📋 Gestión de Menú
+                    </h3>
+
+                    <!-- Add Product Form -->
+                    <form id="addProductForm" onsubmit="addProduct(event)"
+                        style="background:rgba(30, 41, 59, 0.6); padding:1.5rem; border-radius:16px; margin-bottom:2rem; border: 1px solid rgba(255,255,255,0.05);">
+                        <div
+                            style="color:var(--gray); font-size: 0.9rem; margin-bottom:1rem; text-transform:uppercase; letter-spacing:1px; font-weight:600;">
+                            Agregar Nuevo Producto</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <input type="text" id="newProdName" placeholder="Nombre (ej: Pizza)" required
+                                style="width:100%; padding:0.75rem; background:rgba(15, 23, 42, 0.6); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:8px;">
+                            <div style="display:flex; gap:0.5rem;">
+                                <input type="number" id="newProdPrice" placeholder="$ Precio" required
+                                    style="flex:1; padding:0.75rem; background:rgba(15, 23, 42, 0.6); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:8px;">
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <input type="text" id="newProdDesc" placeholder="Descripción breve (opcional)"
+                                style="width:100%; padding:0.75rem; background:rgba(15, 23, 42, 0.6); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:8px;">
+                            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1rem;">
+                                <input type="text" id="newProdOptions" placeholder="Opt: Carne, Pollo (sep por coma)"
+                                    style="padding:0.75rem; background:rgba(15, 23, 42, 0.6); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:8px;">
+                                <input type="number" id="newProdLimit" placeholder="Max (ej: 12)" value="1" min="1"
+                                    title="Máximo de opciones a elegir"
+                                    style="padding:0.75rem; background:rgba(15, 23, 42, 0.6); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:8px;">
+                            </div>
+                            <input type="text" id="newProdImg" placeholder="URL de Imagen (opcional - https://...)"
+                                style="width:100%; padding:0.75rem; background:rgba(15, 23, 42, 0.6); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:8px;">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <select id="newProdCat" required
+                                style="width:100%; padding:0.75rem; background:rgba(15, 23, 42, 0.6); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:8px;">
+                                <option value="Pizzas">Pizzas</option>
+                                <option value="Empanadas">Empanadas</option>
+                                <option value="Parrilla">Parrilla</option>
+                                <option value="Sushi">Sushi</option>
+                                <option value="Helados">Helados</option>
+                                <option value="Bebidas">Bebidas</option>
+                                <option value="Postres">Postres</option>
+                                <option value="Otros">Otros</option>
+                            </select>
+                            <div style="display:flex; gap:10px;">
+                                <button type="submit" id="btnSaveProduct"
+                                    style="width:100%; padding:0.75rem; background:var(--vero-lime); color:var(--vero-dark); font-weight:700; border:none; border-radius:8px; cursor:pointer; transition:all 0.3s; font-size:1rem;">
+                                    + Agregar Item
+                                </button>
+                                <button type="button" id="btnCancelEdit" onclick="cancelEdit()"
+                                    style="display:none; width:30%; padding:0.75rem; background:rgba(255,255,255,0.1); color:white; font-weight:bold; border:none; border-radius:8px; cursor:pointer;">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Product List -->
+                    <div id="loadingMenu" style="display:none; color:var(--gray); text-align:center;">Cargando menú...
+                    </div>
+                    <div id="menuList" style="display:grid; gap:0.75rem;">
+                        <!-- JS renders items here -->
+                    </div>
+                </div>
+
+                <!-- Right: Information & Danger Zone -->
+                <div
+                    style="border-left:1px solid rgba(255,255,255,0.1); padding-left:2rem; display: flex; flex-direction: column; gap: 3rem;">
+                    <div>
+                        <h3 style="color:white; margin-bottom:1.5rem; font-size: 1.25rem;">🏪 Gestión del Local</h3>
+                        <div
+                            style="background:rgba(30, 41, 59, 0.6); padding:1.5rem; border-radius:16px; border: 1px solid rgba(255,255,255,0.05); display:flex; flex-direction:column; gap:1.5rem;">
+
+                            <!-- Status Toggle -->
+                            <div>
+                                <div style="color:var(--gray); font-size:0.9rem; margin-bottom:0.75rem;">Estado de
+                                    Recepción</div>
+                                <div style="display:flex; align-items:center; justify-content:space-between;">
+                                    <div id="statusLabel"
+                                        style="color:var(--success); font-weight:600; font-size:1.1rem; display:flex; align-items:center; gap:0.5rem;">
+                                        <span
+                                            style="display:block; width:10px; height:10px; background:var(--success); border-radius:50%; box-shadow: 0 0 10px var(--success);"></span>
+                                        Abierto
+                                    </div>
+                                    <label class="switch"
+                                        style="position:relative; display:inline-block; width:60px; height:34px;">
+                                        <input type="checkbox" id="storeToggle" onchange="toggleStoreStatus(this)">
+                                        <span class="slider round"
+                                            style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#ccc; transition:.4s; border-radius:34px;"></span>
+                                        <script>
+                                            // Quick CSS for toggle
+                                            document.write(`<style>
+                                                .slider:before { position:absolute; content:""; height:26px; width:26px; left:4px; bottom:4px; background-color:white; transition:.4s; border-radius:50%; }
+                                                input:checked + .slider { background-color: var(--vero-lime); }
+                                                input:checked + .slider:before { transform: translateX(26px); }
+                                            </style>`);
+                                        </script>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Cover Image Input -->
+                            <div>
+                                <div style="color:var(--gray); font-size:0.9rem; margin-bottom:0.75rem;">URL Portada /
+                                    Logo</div>
+                                <div style="display:flex; gap:0.5rem;">
+                                    <input type="text" id="storeImage" placeholder="https://..."
+                                        style="flex:1; padding:0.75rem; background:rgba(15, 23, 42, 0.6); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:8px;">
+                                    <button onclick="updateStoreImage()"
+                                        style="padding:0.75rem; background:var(--vero-card); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:8px; cursor:pointer;">
+                                        📷
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Address Input -->
+                            <div>
+                                <div style="color:var(--gray); font-size:0.9rem; margin-bottom:0.75rem;">Dirección del
+                                    Local</div>
+                                <div style="display:flex; gap:0.5rem;">
+                                    <input type="text" id="storeAddress" placeholder="Ej: San Martín 123"
+                                        style="flex:1; padding:0.75rem; background:rgba(15, 23, 42, 0.6); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:8px;">
+                                    <button onclick="updateAddress()"
+                                        style="padding:0.75rem; background:var(--vero-card); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:8px; cursor:pointer;">
+                                        📍
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Schedule Input -->
+                            <div>
+                                <div style="color:var(--gray); font-size:0.9rem; margin-bottom:0.75rem;">Horarios de
+                                    Atención</div>
+                                <div style="display:flex; gap:0.5rem;">
+                                    <input type="text" id="storeSchedule" placeholder="Ej: 19:00 - 23:30"
+                                        style="flex:1; padding:0.75rem; background:rgba(15, 23, 42, 0.6); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:8px;">
+                                    <button onclick="updateSchedule()"
+                                        style="padding:0.75rem; background:var(--vero-lime); color:var(--vero-dark); border:none; border-radius:8px; font-weight:700; cursor:pointer;">
+                                        💾
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 style="color:var(--danger); margin-bottom:1.5rem; font-size: 1.25rem;">Zona de Peligro</h3>
+                        <div style="display:flex; flex-direction:column; gap:1rem;">
+                            <button onclick="handleLogout()"
+                                style="padding:1rem; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:12px; cursor:pointer; text-align:left; transition: all 0.2s hover; display:flex; align-items:center; gap:0.75rem;">
+                                <span style="font-size:1.2rem;">👋</span> Cerrar Sesión
+                            </button>
+                            <button onclick="deleteAccount()"
+                                style="padding:1rem; background:rgba(239,68,68,0.1); border:1px solid var(--danger); color:var(--danger); border-radius:12px; cursor:pointer; text-align:left; transition: all 0.2s hover; display:flex; align-items:center; gap:0.75rem;">
+                                <span style="font-size:1.2rem;">🗑️</span> Eliminar Cuenta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+
+
+
+        // CONFIGURACIÓN SUPABASE
+        const SUPABASE_URL = 'https://dsxtpgkdxkplwhrvbotg.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzeHRwZ2tkeGtwbHdocnZib3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5NjE2MzcsImV4cCI6MjA4NTUzNzYzN30.nY-PrzOyfmniy_nzZYIq36GWTwcb4ENIchOOA7cbc18';
+
+        let RESTAURANTE_ID = null;
+        let supabaseClient;
+        let allOrders = [];
+        let currentFilter = 'pending';
+
+        // 1. Initialize & Check Session on Load
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+                    auth: {
+                        persistSession: true,
+                        storage: window.sessionStorage,
+                        autoRefreshToken: true,
+                        detectSessionInUrl: true
+                    }
+                });
+                console.log('Supabase Initialized');
+
+                // Allow a small grace period for session restoration
+                await new Promise(r => setTimeout(r, 500));
+
+                await checkSession();
+            } catch (error) {
+                console.error('Init Error:', error);
+                document.getElementById('ordersContainer').innerHTML = `<div class="empty-state" style="color:red">Error de conexión: ${error.message}</div>`;
+            }
+        });
+
+        async function checkSession() {
+            // Check User Session
+            const { data: { session } } = await supabaseClient.auth.getSession();
+
+            if (!session) {
+                window.location.href = 'auth.html';
+                return;
+            }
+
+            // Verify User Role
+            const { data: user, error: userError } = await supabaseClient
+                .from('usuarios')
+                .select('rol')
+                .eq('id', session.user.id)
+                .single();
+
+            if (userError || !user) {
+                alert('⚠️ Error verificando usuario. Inicia sesión nuevamente.');
+                window.location.href = 'auth.html';
+                return;
+            }
+
+            if (user.rol !== 'comercio') {
+                if (user.rol === 'repartidor') {
+                    window.location.href = 'repartidores-panel.html';
+                } else {
+                    window.location.href = 'index.html';
+                }
+                return;
+            }
+
+            // Fetch Linked Restaurant
+            const { data: restaurant, error: restError } = await supabaseClient
+                .from('restaurantes')
+                .select('id, nombre')
+                .eq('usuario_id', session.user.id)
+                .single();
+
+            if (restError || !restaurant) {
+                console.error('Restaurant fetch error:', restError);
+                // Prompt user to link restaurant manually if needed, or show friendly error
+                document.getElementById('ordersContainer').innerHTML = `
+                    <div class="empty-state">
+                        <h3>👋 Bienvenido, ${user.rol}</h3>
+                        <p>Tu usuario no tiene un restaurante asignado todavía.</p>
+                        <p>Por favor contacta a soporte para vincular tu local.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Success: Set Global ID and Load Orders
+            RESTAURANTE_ID = restaurant.id;
+            window.CURRENT_RESTAURANT_NAME = restaurant.nombre;
+
+            console.log('✅ Panel Loaded for:', restaurant.nombre, `(${RESTAURANTE_ID})`);
+
+            // SYNC STATUS ON LOAD
+            try {
+                const { data, error } = await supabaseClient
+                    .from('restaurantes')
+                    .select('acepta_pedidos, horarios') // Fetch schedule too for auto-close
+                    .eq('id', RESTAURANTE_ID)
+                    .single();
+
+                if (!error && data) {
+                    // Sync UI
+                    const toggle = document.getElementById('storeToggle');
+                    if (toggle) toggle.checked = data.acepta_pedidos;
+                    updateStatusLabel(data.acepta_pedidos);
+
+                    // Init Auto-Close
+                    if (data.horarios) {
+                        startAutoCloseCheck(data.horarios);
+                    }
+                }
+            } catch (err) {
+                console.error("Error syncing status:", err);
+            }
+
+            loadOrders();
+            subscribeToChanges();
+        }
+
+        // Cargar pedidos para ESTE restaurante
+        async function loadOrders() {
+            if (!RESTAURANTE_ID) return;
+
+            const container = document.getElementById('ordersContainer');
+            console.log('Fetching orders for Restaurant:', RESTAURANTE_ID);
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('pedidos')
+                    .select(`
+                        id, 
+                        estado, 
+                        total, 
+                        created_at,
+                        numero_pedido,
+                        cliente_nombre,
+                        cliente_telefono,
+                        cliente_direccion,
+                        metodo_pago,
+                        pedido_items (
+                            cantidad, 
+                            notas, 
+                            nombre,
+                            subtotal
+                        )
+                    `)
+                    .eq('restaurante_id', RESTAURANTE_ID) // 🔒 Security Filter
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                console.log('Orders loaded:', data);
+                allOrders = data;
+                renderOrders();
+                updateStats();
+
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                // Show detailed error in UI for debugging
+                const container = document.getElementById('ordersContainer');
+                container.innerHTML = `
+                    <div class="empty-state" style="color:red; text-align:left; padding:2rem;">
+                        <h3>⚠️ Error cargando pedidos</h3>
+                        <p><strong>Mensaje:</strong> ${error.message}</p>
+                        <p><strong>Detalle:</strong> ${JSON.stringify(error)}</p>
+                        <p>Código: ${error.code || 'N/A'}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function showError(error) {
+            document.getElementById('ordersContainer').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">⚠️</div>
+                    <h3>Error de conexión</h3>
+                    <p>${error ? error.message : 'Verifica la configuración de Supabase'}</p>
+                    <p style="font-size:0.8rem; color:red;">${error ? JSON.stringify(error) : ''}</p>
+                </div>
+            `;
+        }
+
+        // Suscribirse a cambios en tiempo real
+        function subscribeToChanges() {
+            supabaseClient
+                .channel('pedidos-changes')
+                .on('postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'pedidos',
+                        // filter: `restaurante_id=eq.${RESTAURANTE_ID}`
+                    },
+                    (payload) => {
+                        console.log('Cambio detectado:', payload);
+                        loadOrders(); // Recargar pedidos
+                        playNotificationSound();
+                    }
+                )
+                .subscribe();
+        }
+
+        async function handleLogout() {
+            const { error } = await supabaseClient.auth.signOut();
+            if (error) console.error('Error signing out:', error);
+            window.location.href = 'auth.html';
+        }
+
+        // Renderizar pedidos
+        function renderOrders() {
+            const container = document.getElementById('ordersContainer');
+
+            let filtered = allOrders;
+            if (currentFilter !== 'all') {
+                filtered = allOrders.filter(o => {
+                    if (currentFilter === 'pending') return o.estado === 'pendiente' || o.estado === 'confirmado';
+                    if (currentFilter === 'preparing') return o.estado === 'preparando';
+                    if (currentFilter === 'ready') return o.estado === 'listo';
+                    return true;
+                });
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <h3>No hay pedidos ${currentFilter !== 'all' ? 'en este estado' : ''}</h3>
+                        <p>Los nuevos pedidos aparecerán aquí automáticamente</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="orders-grid">
+                    ${filtered.map(order => renderOrderCard(order)).join('')}
+                </div>
+            `;
+        }
+
+        // Renderizar tarjeta de pedido
+        function renderOrderCard(order) {
+            const statusClass = order.estado === 'pendiente' || order.estado === 'confirmado' ? 'pending' :
+                order.estado === 'preparando' ? 'preparing' : 'ready';
+
+            const statusBadgeClass = order.estado === 'pendiente' || order.estado === 'confirmado' ? 'status-pending' :
+                order.estado === 'preparando' ? 'status-preparing' : 'status-ready';
+
+            const statusText = order.estado === 'pendiente' ? '⏳ Nuevo' :
+                order.estado === 'confirmado' ? '✓ Confirmado' :
+                    order.estado === 'preparando' ? '👨‍🍳 Preparando' :
+                        order.estado === 'listo' ? '✅ Listo' : order.estado;
+
+            const timeAgo = getTimeAgo(order.created_at);
+
+            return `
+                <div class="order-card ${statusClass}">
+                    <div class="order-header">
+                        <div>
+                            <div class="order-number">${order.numero_pedido}</div>
+                            <div class="order-time">Hace ${timeAgo}</div>
+                        </div>
+                        <span class="status-badge ${statusBadgeClass}">${statusText}</span>
+                    </div>
+                    
+                    <div class="order-items">
+                        ${(order.pedido_items || []).map(item => `
+                            <div class="order-item">
+                                <div>
+                                    <span class="item-quantity">${item.cantidad}x</span>
+                                    <span class="item-name">${item.nombre}</span>
+                                </div>
+                                <span>$${formatPrice(item.subtotal)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="customer-info">
+                        <div class="info-item">
+                            <div>
+                                <div class="info-label">Cliente</div>
+                                <div>${order.cliente_nombre || 'Cliente'}</div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div>
+                                <div class="info-label">Teléfono</div>
+                                <div>${order.cliente_telefono || ''}</div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div>
+                                <div class="info-label">Dirección</div>
+                                <div>${order.cliente_direccion || 'Retiro en local'}</div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div>
+                                <div class="info-label">Pago</div>
+                                <div>${order.metodo_pago || 'Efectivo'}</div>
+                            </div>
+                        </div>
+                    </div>
+                                <div>${order.metodo_pago}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${order.notas ? `<div style="margin: 1rem 0; padding: 1rem; background: #FEF3C7; border-radius: 12px;">
+                        <strong>Nota:</strong> ${order.notas}
+                    </div>` : ''}
+                    
+                    <div class="order-total">
+                        <span class="total-label">Total:</span>
+                        <span class="total-amount">$${formatPrice(order.total)}</span>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        ${order.estado === 'pendiente' ? `
+                            <button class="btn btn-accept" onclick="acceptOrder('${order.id}')">
+                                ✓ Aceptar Pedido
+                            </button>
+                            <button class="btn btn-reject" onclick="rejectOrder('${order.id}')">
+                                ✕ Rechazar
+                            </button>
+                        ` : order.estado === 'confirmado' ? `
+                            <button class="btn btn-accept" onclick="startPreparing('${order.id}')">
+                                👨‍🍳 Comenzar a Preparar
+                            </button>
+                        ` : order.estado === 'preparando' ? `
+                            <button class="btn btn-ready" onclick="markReady('${order.id}')">
+                                ✓ Marcar como Listo
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Acciones
+        async function acceptOrder(orderId) {
+            if (!confirm('¿Aceptar este pedido?')) return;
+
+            await updateOrderStatus(orderId, 'confirmado');
+        }
+
+        async function startPreparing(orderId) {
+            await updateOrderStatus(orderId, 'preparando');
+        }
+
+        async function markReady(orderId) {
+            await updateOrderStatus(orderId, 'listo');
+        }
+
+        async function rejectOrder(orderId) {
+            if (!confirm('¿Rechazar este pedido? Esta acción no se puede deshacer.')) return;
+
+            await updateOrderStatus(orderId, 'cancelado');
+        }
+
+        async function updateOrderStatus(orderId, newStatus) {
+            if (supabaseClient) {
+                const { error } = await supabaseClient
+                    .from('pedidos')
+                    .update({ estado: newStatus })
+                    .eq('id', orderId);
+
+                if (error) {
+                    alert('Error actualizando pedido');
+                    console.error(error);
+                } else {
+                    loadOrders();
+                }
+            } else {
+                // Mock
+                const order = allOrders.find(o => o.id === orderId);
+                if (order) order.estado = newStatus;
+                renderOrders();
+                updateStats();
+            }
+        }
+
+        // Filtrar pedidos
+        function filterOrders(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            renderOrders();
+        }
+
+        // Actualizar estadísticas
+        function updateStats() {
+            const pending = allOrders.filter(o => o.estado === 'pendiente' || o.estado === 'confirmado').length;
+            const today = allOrders.filter(o => isToday(o.created_at)).length;
+            const total = allOrders.filter(o => isToday(o.created_at)).reduce((sum, o) => sum + o.total, 0);
+
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('todayCount').textContent = today;
+            document.getElementById('totalAmount').textContent = '$' + formatPrice(total);
+        }
+
+        // Utilidades
+        function formatPrice(cents) {
+            return Number(cents).toLocaleString('es-AR');
+        }
+
+        function getTimeAgo(timestamp) {
+            const now = new Date();
+            const then = new Date(timestamp);
+            const diff = Math.floor((now - then) / 1000 / 60);
+
+            if (diff < 1) return 'Ahora';
+            if (diff < 60) return `${diff} min`;
+            if (diff < 1440) return `${Math.floor(diff / 60)} hs`;
+            return `${Math.floor(diff / 1440)} días`;
+        }
+
+        function isToday(timestamp) {
+            const today = new Date();
+            const date = new Date(timestamp);
+            return date.getDate() === today.getDate() &&
+                date.getMonth() === today.getMonth() &&
+                date.getFullYear() === today.getFullYear();
+        }
+
+        function playNotificationSound() {
+            // Agregar sonido de notificación
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBzGJ0fPTgjMGHm7A7+OZURE');
+            audio.play().catch(() => { });
+        }
+
+        function showError() {
+            document.getElementById('ordersContainer').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">⚠️</div>
+                    <h3>Error de conexión</h3>
+                    <p>Verifica la configuración de Supabase</p>
+                </div>
+            `;
+        }
+
+        // Mock data
+        function loadMockOrders() {
+            allOrders = [
+                {
+                    id: '1',
+                    numero_pedido: '#12345',
+                    estado: 'pendiente',
+                    cliente_nombre: 'Juan Pérez',
+                    cliente_telefono: '297-1234567',
+                    cliente_direccion: 'Av. Tehuelches 200',
+                    metodo_pago: 'Efectivo',
+                    total: 450000,
+                    created_at: new Date().toISOString(),
+                    pedido_items: [
+                        { nombre: 'Pizza Muzzarella', cantidad: 1, subtotal: 350000 },
+                        { nombre: 'Coca Cola 1.5L', cantidad: 1, subtotal: 100000 }
+                    ]
+                }
+            ];
+        }
+
+
+
+        // ==========================================
+        // PERFIL Y MENÚ (TABS LOGIC)
+        // ==========================================
+
+        // Open Profile Tab (Hide Orders)
+        function openProfileTab() {
+            // Update Active Tab
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            // Find key that contains "Mi Perfil" text or the last child
+            const tabs = document.querySelectorAll('.tab');
+            tabs[tabs.length - 1].classList.add('active');
+
+            // Toggle Containers
+            document.getElementById('ordersContainer').style.display = 'none';
+            document.getElementById('profileContainer').style.display = 'block';
+
+            // Load Data
+            const name = window.CURRENT_RESTAURANT_NAME || 'Tu Restaurante';
+            document.getElementById('profileRestName').innerText = name;
+            loadMenuManager();
+            loadStoreSettings(); // Load status and schedule
+        }
+
+        // Functions reused by Filter (Reset view to orders)
+        const originalFilterOrders = filterOrders;
+        filterOrders = function (filter) {
+            // Show Orders, Hide Profile
+            document.getElementById('ordersContainer').style.display = 'block';
+            document.getElementById('profileContainer').style.display = 'none';
+
+            originalFilterOrders(filter);
+        }
+
+        function closeProfile() {
+            // No-op or switch back to orders
+            filterOrders('all');
+        }
+
+        async function loadStoreSettings() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('restaurantes')
+                    .select('acepta_pedidos, horarios, imagen_url, direccion')
+                    .eq('id', RESTAURANTE_ID)
+                    .single();
+
+                if (error) throw error;
+
+                // Update Toggle
+                const toggle = document.getElementById('storeToggle');
+                toggle.checked = data.acepta_pedidos;
+                updateStatusLabel(data.acepta_pedidos);
+
+                // Update Schedule & Image & Address
+                document.getElementById('storeSchedule').value = data.horarios || '';
+                document.getElementById('storeImage').value = data.imagen_url || '';
+                document.getElementById('storeAddress').value = data.direccion || '';
+
+            } catch (error) {
+                console.error('Error loading store settings:', error);
+            }
+        }
+
+        async function toggleStoreStatus(checkbox) {
+            const isOpen = checkbox.checked;
+            updateStatusLabel(isOpen); // Optimistic UI
+
+            try {
+                const { error } = await supabaseClient
+                    .from('restaurantes')
+                    .update({ acepta_pedidos: isOpen })
+                    .eq('id', RESTAURANTE_ID);
+
+                if (error) throw error;
+                console.log('✅ Estado actualizado en DB:', isOpen);
+                // Success
+            } catch (error) {
+                console.error('Error toggling status:', error);
+                checkbox.checked = !isOpen; // Revert
+                updateStatusLabel(!isOpen);
+                alert('Error actualizando estado: ' + error.message);
+            }
+        }
+
+        async function updateSchedule() {
+            const schedule = document.getElementById('storeSchedule').value;
+            try {
+                const { error } = await supabaseClient
+                    .from('restaurantes')
+                    .update({ horarios: schedule })
+                    .eq('id', RESTAURANTE_ID);
+
+                if (error) throw error;
+                alert('✅ Horarios actualizados');
+
+                // Restart Auto-Close Check
+                startAutoCloseCheck(schedule);
+            } catch (error) {
+                console.error('Error updating schedule:', error);
+                alert('Error actualizando horarios');
+            }
+        }
+
+        async function updateStoreImage() {
+            const imgUrl = document.getElementById('storeImage').value;
+            try {
+                const { error } = await supabaseClient
+                    .from('restaurantes')
+                    .update({ imagen_url: imgUrl })
+                    .eq('id', RESTAURANTE_ID);
+
+                if (error) throw error;
+                alert('✅ Imagen de portada actualizada');
+            } catch (error) {
+                console.error('Error updating image:', error);
+                alert('Error actualizando imagen');
+            }
+        }
+
+        async function updateAddress() {
+            const address = document.getElementById('storeAddress').value;
+            try {
+                const { error } = await supabaseClient
+                    .from('restaurantes')
+                    .update({ direccion: address })
+                    .eq('id', RESTAURANTE_ID);
+
+                if (error) throw error;
+                alert('✅ Dirección actualizada');
+            } catch (error) {
+            }
+        }
+
+        // ==========================================
+        // AUTO-CLOSE LOGIC
+        // ==========================================
+        let autoCloseInterval;
+
+        function startAutoCloseCheck(scheduleString) {
+            if (autoCloseInterval) clearInterval(autoCloseInterval);
+
+            // Try to parse closing time (Assuming format like "19:00 - 23:30" or just "23:00")
+            // We look for the last HH:MM pattern
+            const times = scheduleString.match(/(\d{1,2}):(\d{2})/g);
+            if (!times || times.length === 0) return;
+
+            const closeTimeStr = times[times.length - 1]; // Take the last one
+            const [closeHour, closeMinute] = closeTimeStr.split(':').map(Number);
+
+            console.log(`⏰ Auto-close scheduled for ${closeHour}:${closeMinute}`);
+
+            autoCloseInterval = setInterval(() => {
+                const now = new Date();
+                const currentHour = now.getHours();
+                const currentMinute = now.getMinutes();
+
+                // Check if we just passed the closing time (within the last minute to avoid repeated closing)
+                if (currentHour === closeHour && currentMinute === closeMinute) {
+                    const toggle = document.getElementById('storeToggle');
+                    if (toggle && toggle.checked) {
+                        console.log('⏰ Closing time reached! Auto-closing...');
+                        toggle.checked = false;
+                        toggleStoreStatus(toggle); // Determine if we should alert user or silently close? 
+                        // toggleStoreStatus alerts on success, which is fine.
+                        // Or maybe we want a specific notification.
+                        alert('🌙 Horario de cierre cumplido. El local se ha cerrado automáticamente.');
+                    }
+                }
+            }, 60000); // Check every minute
+        }
+
+        function updateStatusLabel(isOpen) {
+            const label = document.getElementById('statusLabel');
+            if (isOpen) {
+                label.innerHTML = `
+                    <span style="display:block; width:10px; height:10px; background:var(--success); border-radius:50%; box-shadow: 0 0 10px var(--success);"></span>
+                    Abierto
+                `;
+                label.style.color = 'var(--success)';
+            } else {
+                label.innerHTML = `
+                    <span style="display:block; width:10px; height:10px; background:var(--danger); border-radius:50%;"></span>
+                    Cerrado
+                `;
+                label.style.color = 'var(--danger)';
+            }
+        }
+
+        async function loadMenuManager() {
+            const list = document.getElementById('menuList');
+            const loader = document.getElementById('loadingMenu');
+
+            list.innerHTML = '';
+            loader.style.display = 'block';
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('menu_items')
+                    .select('*')
+                    .eq('restaurante_id', RESTAURANTE_ID)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                if (data.length === 0) {
+                    list.innerHTML = '<div style="color:var(--gray); text-align:center; padding:1rem;">No hay productos. ¡Agrega el primero!</div>';
+                } else {
+                    list.innerHTML = data.map(item => `
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:0.75rem; border-radius:8px; margin-bottom:0.5rem;">
+                            <div>
+                                <div style="color:white; font-weight:600;">${item.nombre}</div>
+                                <div style="color:var(--gray); font-size:0.8rem;">$${item.precio} • ${item.categoria}</div>
+                            </div>
+                            <button onclick="editProduct('${encodeURIComponent(JSON.stringify(item))}')" style="background:none; border:none; cursor:pointer; font-size:1.2rem; margin-right:10px;" title="Editar">
+                                ✏️
+                            </button>
+
+                            <button onclick="deleteProduct('${item.id}')" style="background:none; border:none; cursor:pointer; font-size:1.2rem;" title="Eliminar">
+                                🗑️
+                            </button>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading menu:', error);
+                list.innerHTML = '<div style="color:red">Error cargando menú</div>';
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        // ==========================================
+        // GESTIÓN DE PRODUCTOS (CRUD)
+        // ==========================================
+        let EDITING_PRODUCT_ID = null;
+
+        async function addProduct(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSaveProduct');
+            btn.innerText = 'Guardando...';
+            btn.disabled = true;
+
+            const name = document.getElementById('newProdName').value;
+            const desc = document.getElementById('newProdDesc').value;
+            const options = document.getElementById('newProdOptions').value;
+            const limit = document.getElementById('newProdLimit').value || 1;
+            const price = document.getElementById('newProdPrice').value;
+            const cat = document.getElementById('newProdCat').value;
+            const img = document.getElementById('newProdImg').value;
+
+            try {
+                if (EDITING_PRODUCT_ID) {
+                    // UPDATE EXISTING
+                    const { error } = await supabaseClient
+                        .from('menu_items')
+                        .update({
+                            nombre: name,
+                            descripcion: desc,
+                            opciones: options ? options : null,
+                            limite_opciones: parseInt(limit),
+                            precio: price,
+                            categoria: cat,
+                            imagen_url: img
+                        })
+                        .eq('id', EDITING_PRODUCT_ID);
+
+                    if (error) throw error;
+                    alert('✅ Producto actualizado');
+                    cancelEdit(); // Reset form mode
+
+                } else {
+                    // INSERT NEW
+                    const { error } = await supabaseClient
+                        .from('menu_items')
+                        .insert({
+                            restaurante_id: RESTAURANTE_ID,
+                            nombre: name,
+                            descripcion: desc,
+                            opciones: options ? options : null,
+                            limite_opciones: parseInt(limit),
+                            precio: price,
+                            categoria: cat,
+                            imagen_url: img,
+                            disponible: true
+                        });
+
+                    if (error) throw error;
+                    document.getElementById('addProductForm').reset();
+                }
+
+                loadMenuManager();
+
+            } catch (error) {
+                alert('Error al guardar producto: ' + error.message);
+            } finally {
+                btn.innerText = EDITING_PRODUCT_ID ? 'Guardar Cambios' : '+ Agregar Item';
+                btn.disabled = false;
+            }
+        }
+
+        function editProduct(itemStr) {
+            const item = JSON.parse(decodeURIComponent(itemStr));
+            EDITING_PRODUCT_ID = item.id;
+
+            // Populate Form
+            document.getElementById('newProdName').value = item.nombre;
+            document.getElementById('newProdDesc').value = item.descripcion || '';
+            document.getElementById('newProdPrice').value = item.precio;
+            document.getElementById('newProdCat').value = item.categoria;
+            document.getElementById('newProdOptions').value = item.opciones || '';
+            document.getElementById('newProdLimit').value = item.limite_opciones || 1;
+            document.getElementById('newProdImg').value = item.imagen_url || '';
+
+            // UI Changes
+            const btn = document.getElementById('btnSaveProduct');
+            btn.innerText = 'Guardar Cambios';
+            document.getElementById('btnCancelEdit').style.display = 'block';
+
+            // Scroll to form
+            document.getElementById('addProductForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function cancelEdit() {
+            EDITING_PRODUCT_ID = null;
+            document.getElementById('addProductForm').reset();
+
+            const btn = document.getElementById('btnSaveProduct');
+            btn.innerText = '+ Agregar Item';
+            document.getElementById('btnCancelEdit').style.display = 'none';
+        }
+
+
+        async function deleteProduct(id) {
+            if (!confirm('¿Eliminar este producto del menú?')) return;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('menu_items')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+                loadMenuManager();
+
+            } catch (error) {
+                alert('Error eliminando producto');
+            }
+        }
+
+        async function deleteAccount() {
+            if (!confirm('🛑 ¿ESTÁS SEGURO?\n\nEsta acción eliminará permanentemente tu cuenta, tu restaurante y todos tus datos.\n\nNo se puede deshacer.')) return;
+
+            try {
+                // Call the secure RPC function to delete self (Auth + Data)
+                const { error } = await supabaseClient.rpc('delete_own_user');
+
+                if (error) throw error;
+
+                alert('Tu cuenta ha sido eliminada correctamente. ¡Esperamos verte pronto!');
+                await supabaseClient.auth.signOut();
+                window.location.href = 'auth.html';
+
+            } catch (error) {
+                console.error('Error deleting account:', error);
+                alert('No se pudo eliminar la cuenta: ' + error.message);
+            }
+        }
+    </script>
+</body>
+
+</html>

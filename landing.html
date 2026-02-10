@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERO | Delivery de Verdad</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --vero-dark: #0F172A;
+            --vero-lime: #a3e635;
+            --vero-lime-hover: #84cc16;
+            --white: #ffffff;
+            --gray-100: #f1f5f9;
+            --gray-400: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--vero-dark);
+            color: var(--white);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-img {
+            height: 40px;
+            /* Placeholder for the logo image uploaded by the user */
+        }
+
+        .logo-text {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 800;
+            font-size: 1.8rem;
+            letter-spacing: -1px;
+        }
+
+        .hero {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 4rem 2rem;
+            background: radial-gradient(circle at center, #1e293b 0%, #0F172A 100%);
+        }
+
+        .hero-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            max-width: 800px;
+        }
+
+        .hero-title span {
+            color: var(--vero-lime);
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--gray-400);
+            margin-bottom: 3rem;
+            max-width: 600px;
+        }
+
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 1200px;
+            padding: 2rem;
+        }
+
+        .role-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .role-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--vero-lime);
+            box-shadow: 0 10px 30px -10px rgba(163, 230, 53, 0.2);
+        }
+
+        .role-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            background: rgba(163, 230, 53, 0.1);
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: var(--vero-lime);
+        }
+
+        .role-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .role-desc {
+            color: var(--gray-400);
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .role-btn {
+            margin-top: auto;
+            background: transparent;
+            border: 2px solid var(--vero-lime);
+            color: var(--vero-lime);
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .role-card:hover .role-btn {
+            background: var(--vero-lime);
+            color: var(--vero-dark);
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray-400);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="logo-container">
+            <!-- Using the uploaded logo path logic or text -->
+            <span class="logo-text">VERO<span style="color: var(--vero-lime);">.</span></span>
+        </div>
+        <div>
+            <!-- Login Helper -->
+            <a href="auth.html" style="color: var(--gray-400); text-decoration: none; font-weight: 600;">Iniciar
+                Sesión</a>
+        </div>
+    </nav>
+
+    <main class="hero">
+        <h1 class="hero-title">
+            Delivery de <br>
+            <span>Verdad.</span>
+        </h1>
+        <p class="hero-subtitle">
+            Conectamos los mejores sabores de Comodoro Rivadavia con tu mesa. Sin vueltas, sin demoras fantasmas. Lo que
+            ves es lo que llega.
+        </p>
+
+        <div class="roles-grid">
+            <!-- Consumer Card -->
+            <a href="auth.html?role=consumer" class="role-card">
+                <div class="role-icon">🍔</div>
+                <h3 class="role-title">Tengo Hambre</h3>
+                <p class="role-desc">Explora los mejores locales de Zona Norte y pedí tu comida favorita en segundos.
+                </p>
+                <div class="role-btn">Pedir Ahora</div>
+            </a>
+
+            <!-- Commerce Card -->
+            <a href="auth.html?role=commerce" class="role-card">
+                <div class="role-icon">🏪</div>
+                <h3 class="role-title">Tengo un Local</h3>
+                <p class="role-desc">Gestiona tus pedidos, menú y analíticas desde un panel diseñado para crecer.</p>
+                <div class="role-btn">Registrar Local</div>
+            </a>
+
+            <!-- Driver Card -->
+            <a href="auth.html?role=driver" class="role-card">
+                <div class="role-icon">🛵</div>
+                <h3 class="role-title">Quiero Repartir</h3>
+                <p class="role-desc">Sé tu propio jefe, elegí tus horarios y ganá dinero por cada entrega real.</p>
+                <div class="role-btn">Unirme al Equipo</div>
+            </a>
+        </div>
+    </main>
+
+    <footer>
+        <p>© 2026 VERO Delivery. Comodoro Rivadavia, Zona Norte.</p>
+    </footer>
+
+</body>
+
+</html>

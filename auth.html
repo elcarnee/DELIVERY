@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceder | VERO</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --vero-dark: #0F172A;
+            --vero-lime: #a3e635;
+            --white: #ffffff;
+            --gray-700: #334155;
+            --gray-400: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--vero-dark);
+            color: var(--white);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 450px;
+            background: rgba(30, 41, 59, 0.5);
+            /* Slate-800 with opacity */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            display: block;
+            text-decoration: none;
+            color: white;
+        }
+
+        .subtitle {
+            color: var(--gray-400);
+            font-size: 0.95rem;
+        }
+
+        .tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            background: transparent;
+            color: var(--gray-400);
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: var(--gray-700);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-400);
+        }
+
+        .input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: white;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .input:focus {
+            border-color: var(--vero-lime);
+            box-shadow: 0 0 0 2px rgba(163, 230, 53, 0.1);
+        }
+
+        .role-select-wrapper {
+            margin-bottom: 1.5rem;
+            display: none;
+            /* Hidden by default, shown on Register tab */
+        }
+
+        .role-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .role-option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .role-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .role-option.selected {
+            background: rgba(163, 230, 53, 0.1);
+            border-color: var(--vero-lime);
+            color: var(--vero-lime);
+        }
+
+        .role-emoji {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .role-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 1rem;
+            background: var(--vero-lime);
+            color: var(--vero-dark);
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-submit:hover {
+            background: #bef264;
+            transform: translateY(-1px);
+        }
+
+        .btn-loading {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        #messageBox {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: center;
+            display: none;
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .success {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="auth-container">
+        <div class="header">
+            <a href="landing.html" class="logo">VERO<span style="color: var(--vero-lime);">.</span></a>
+            <p class="subtitle" id="formTitle">Bienvenido de nuevo</p>
+        </div>
+
+        <div class="tabs" id="authTabs" style="display: none;">
+            <button class="tab active" onclick="switchTab('login')">Ingresar</button>
+            <button class="tab" onclick="switchTab('register')">Registrarse</button>
+        </div>
+
+        <form id="authForm" onsubmit="handleAuth(event)">
+
+            <div id="registerFields" style="display: none;">
+                <div class="form-group">
+                    <label class="label">Nombre Completo</label>
+                    <input type="text" id="name" class="input" placeholder="Ej: Juan Pérez">
+                </div>
+
+                <div class="role-select-wrapper" style="display: block;">
+                    <label class="label">¿Cómo vas a usar VERO?</label>
+                    <input type="hidden" id="selectedRole" value="consumer">
+                    <div class="role-options">
+                        <div class="role-option selected" onclick="selectRole('consumer', this)" data-role="consumer">
+                            <span class="role-emoji">🍔</span>
+                            <span class="role-name">Pedir</span>
+                        </div>
+                        <div class="role-option" onclick="selectRole('commerce', this)" data-role="commerce">
+                            <span class="role-emoji">🏪</span>
+                            <span class="role-name">Local</span>
+                        </div>
+                        <div class="role-option" onclick="selectRole('driver', this)" data-role="driver">
+                            <span class="role-emoji">🛵</span>
+                            <span class="role-name">Repartir</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="label">Correo Electrónico</label>
+                <input type="email" id="email" class="input" placeholder="hola@ejemplo.com" required>
+            </div>
+
+            <div class="form-group">
+                <label class="label">Contraseña</label>
+                <input type="password" id="password" class="input" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="btn-submit" id="submitBtn">Ingresar</button>
+
+            <div style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--gray);">
+                <span id="toggleText">¿No tienes cuenta?</span>
+                <a href="#" onclick="toggleAuthMode(event)"
+                    style="color: var(--primary); font-weight: 700; text-decoration: none; margin-left: 0.5rem;"
+                    id="toggleLink">Regístrate aquí</a>
+            </div>
+        </form>
+
+        <div id="messageBox"></div>
+    </div>
+
+    <!-- Auth Logic Script -->
+    <script src="js/auth-manager.js"></script>
+    <script>
+        // Tab Handler
+        let currentTab = 'login';
+
+        // Toggle between Login and Register
+        function toggleAuthMode(e) {
+            e.preventDefault();
+            if (currentTab === 'login') {
+                switchTab('register');
+            } else {
+                switchTab('login');
+            }
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            // Tabs are hidden now, so we don't need to update them visually
+            // document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+
+            const registerFields = document.getElementById('registerFields');
+            const submitBtn = document.getElementById('submitBtn');
+            const formTitle = document.getElementById('formTitle');
+            const toggleText = document.getElementById('toggleText');
+            const toggleLink = document.getElementById('toggleLink');
+
+            if (tab === 'register') {
+                registerFields.style.display = 'block';
+                submitBtn.textContent = 'Crear Cuenta';
+                formTitle.textContent = 'Únete a VERO hoy';
+                toggleText.textContent = '¿Ya tienes cuenta?';
+                toggleLink.textContent = 'Ingresa aquí';
+            } else {
+                registerFields.style.display = 'none';
+                submitBtn.textContent = 'Ingresar';
+                formTitle.textContent = 'Bienvenido de nuevo';
+                toggleText.textContent = '¿No tienes cuenta?';
+                toggleLink.textContent = 'Regístrate aquí';
+            }
+        }
+
+        // Role Selector Handler
+        function selectRole(role, element) {
+            document.getElementById('selectedRole').value = role;
+            document.querySelectorAll('.role-option').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+
+        // Init: Check URL params
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const roleParam = params.get('role');
+            const modeParam = params.get('mode');
+
+            if (roleParam || modeParam === 'register') {
+                // REGISTRATION MODE (Coming from Landing)
+                // Show tabs or just force register view? 
+                // User said "registration only for landing", so let's force register view.
+
+                switchTab('register');
+
+                // Show tabs if user wants to switch back (optional, but good UX)
+                // document.getElementById('authTabs').style.display = 'flex'; 
+
+                // Select role
+                if (roleParam) {
+                    const roleOption = document.querySelector(`.role-option[data-role="${roleParam}"]`);
+                    if (roleOption) {
+                        selectRole(roleParam, roleOption);
+                    }
+                }
+            } else {
+                // LOGIN MODE (Default)
+                switchTab('login');
+                // Ensure tabs are hidden
+                document.getElementById('authTabs').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+
+</html>
