@@ -16,6 +16,7 @@
 
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
 
     <style>
         :root {
@@ -1034,13 +1035,7 @@
     </div>
 
     <script>
-        // ==========================================
-        // CONFIGURACIÓN DE SUPABASE
-        // ==========================================
-        // ⚠️ IMPORTANTE: Reemplazar con TUS credenciales de Supabase
-        const SUPABASE_URL = 'https://dsxtpgkdxkplwhrvbotg.supabase.co'; // Ej: https://xxxxx.supabase.co
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzeHRwZ2tkeGtwbHdocnZib3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5NjE2MzcsImV4cCI6MjA4NTUzNzYzN30.nY-PrzOyfmniy_nzZYIq36GWTwcb4ENIchOOA7cbc18'; // Tu clave pública (anon/public)
-
+        // Uses shared config from js/supabase-config.js
         let supabaseClient;
         let allRestaurants = [];
         let currentRestaurantId = null;
@@ -1391,21 +1386,8 @@
 
         // Inicializar Supabase y Auth
         function initSupabase() {
-            if (SUPABASE_URL === 'TU_SUPABASE_URL_AQUI') {
-                console.warn('⚠️ Configurá tus credenciales de Supabase en el código');
-                loadMockData();
-                return false;
-            }
-
             try {
-                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-                    auth: {
-                        persistSession: true,
-                        storage: window.sessionStorage,
-                        autoRefreshToken: true,
-                        detectSessionInUrl: true
-                    }
-                });
+                supabaseClient = createSupabaseClient();
 
                 // Check Session Status using new logic
                 // updateAuthUI(); // REMOVED LEGACY CALL
@@ -1675,9 +1657,7 @@
             document.body.style.overflow = 'auto';
         }
 
-        function formatPrice(price) {
-            return Number(price).toLocaleString('es-AR');
-        }
+        // formatPrice now comes from js/supabase-config.js
 
         function isNew(createdAt) {
             const created = new Date(createdAt);
@@ -1687,7 +1667,10 @@
         }
 
         function showNotification(message) {
-            alert(message); // Mejorar con una notificación real
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.transform = 'translateY(0)';
+            setTimeout(() => { toast.style.transform = 'translateY(100px)'; }, 2500);
         }
 
 
@@ -1767,10 +1750,10 @@
                 checkSession(); // Check user session
                 subscribeToRestaurants();
 
-                // Polling Fallback (faster: every 3 seconds) for near-instant updates
+                // Soft refresh every 60s as fallback (realtime handles instant updates)
                 setInterval(() => {
                     loadRestaurants();
-                }, 3000);
+                }, 60000);
             }
             loadRestaurants();
 

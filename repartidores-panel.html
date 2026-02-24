@@ -9,6 +9,7 @@
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap"
         rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
 
     <style>
         :root {
@@ -530,9 +531,7 @@
 
 
 
-        // CONFIGURACIÓN SUPABASE
-        const SUPABASE_URL = 'https://dsxtpgkdxkplwhrvbotg.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzeHRwZ2tkeGtwbHdocnZib3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5NjE2MzcsImV4cCI6MjA4NTUzNzYzN30.nY-PrzOyfmniy_nzZYIq36GWTwcb4ENIchOOA7cbc18';
+        // Uses shared config from js/supabase-config.js
 
         let REPARTIDOR_ID = null;
         let supabaseClient;
@@ -542,15 +541,8 @@
         // 1. Initialize & Check Session on Load
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-                    auth: {
-                        persistSession: true,
-                        storage: window.sessionStorage,
-                        autoRefreshToken: true,
-                        detectSessionInUrl: true
-                    }
-                });
-                console.log('Supabase Initialized (Driver Panel)');
+                supabaseClient = createSupabaseClient();
+                if (!supabaseClient) throw new Error('Supabase init failed');
 
                 // Allow a small grace period for session restoration
                 await new Promise(r => setTimeout(r, 500));
@@ -567,7 +559,16 @@
             const { data: { session } } = await supabaseClient.auth.getSession();
 
             if (!session) {
-                window.location.href = 'auth.html';
+                // DEV MODE: Skip login, load mock data
+                console.log('⚠️ DEV MODE: No session, loading mock data');
+                REPARTIDOR_ID = 'mock-driver-id';
+                isOnline = true;
+                updateOnlineStatusUI();
+                const profileBtn = document.querySelector('button[onclick="openProfile()"]');
+                if (profileBtn) profileBtn.innerText = '👤 Demo';
+                loadMockDeliveries();
+                renderDeliveries();
+                updateStats();
                 return;
             }
 
@@ -1246,25 +1247,8 @@
             document.getElementById('rating').textContent = '4.8';
         }
 
-        // Utilidades
-        function formatPrice(cents) {
-            return Number(cents).toLocaleString('es-AR');
-        }
-
-        function playNotificationSound() {
-            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBzGJ0fPTgjMGHm7A7+OZURE');
-            audio.play().catch(() => { });
-        }
-
-        function showError() {
-            document.getElementById('deliveriesContainer').innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">⚠️</div>
-                    <h3>Error de conexión</h3>
-                    <p>Verifica la configuración de Supabase</p>
-                </div>
-            `;
-        }
+        // Utilities: formatPrice, playNotificationSound
+        // are loaded from js/supabase-config.js
 
         // Mock data
         function loadMockDeliveries() {
@@ -1272,16 +1256,43 @@
                 {
                     id: '1',
                     numero_pedido: '#12345',
-                    estado: 'listo',
+                    estado: 'en_camino',
                     total: 450000,
                     cliente_nombre: 'Juan Pérez',
                     cliente_telefono: '297-1234567',
                     cliente_direccion: 'Av. Tehuelches 200, Km3',
                     metodo_pago: 'Efectivo',
-                    restaurantes: {
-                        nombre: 'Puerto Mitre',
-                        direccion: 'Centro Km3'
-                    },
+                    retirado: false,
+                    restaurante: { nombre: 'Puerto Mitre', direccion: 'San Martín 540, Centro' },
+                    restaurante_direccion: 'San Martín 540, Centro',
+                    repartidor_id: 'mock-driver-id'
+                },
+                {
+                    id: '2',
+                    numero_pedido: '#12346',
+                    estado: 'listo',
+                    total: 780000,
+                    cliente_nombre: 'María García',
+                    cliente_telefono: '297-7654321',
+                    cliente_direccion: 'Belgrano 320, Km4',
+                    metodo_pago: 'Transferencia',
+                    retirado: false,
+                    restaurante: { nombre: 'Sushi House', direccion: 'Rivadavia 800' },
+                    restaurante_direccion: 'Rivadavia 800',
+                    repartidor_id: null
+                },
+                {
+                    id: '3',
+                    numero_pedido: '#12347',
+                    estado: 'listo',
+                    total: 350000,
+                    cliente_nombre: 'Carlos López',
+                    cliente_telefono: '297-5551234',
+                    cliente_direccion: 'Roca 1500, Km5',
+                    metodo_pago: 'MercadoPago',
+                    retirado: false,
+                    restaurante: { nombre: 'Burger Lab', direccion: 'Pellegrini 250' },
+                    restaurante_direccion: 'Pellegrini 250',
                     repartidor_id: null
                 }
             ];
