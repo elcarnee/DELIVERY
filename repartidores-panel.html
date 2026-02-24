@@ -419,14 +419,12 @@
                 VERO<span style="color: var(--vero-lime);">.</span> <span
                     style="font-weight: 400; font-size: 1.2rem; margin-left: 5px; color: var(--gray);">Repartidores</span>
             </div>
-            <div style="display: flex; gap: 1.5rem; align-items: center;">
-                <button onclick="openProfile()"
-                    style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">
+            <div class="header-actions">
+                <button class="btn-outline" onclick="openProfile()">
                     👤 Mi Perfil
                 </button>
-                <button onclick="handleLogout()"
-                    style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">
-                    Cerrar Sesión
+                <button class="btn-outline" onclick="handleLogout()">
+                    🚪 Salir
                 </button>
                 <div class="status-toggle">
                     <span id="statusText">Desconectado</span>
