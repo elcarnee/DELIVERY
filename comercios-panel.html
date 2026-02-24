@@ -9,6 +9,7 @@
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap"
         rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
 
     <style>
         :root {
@@ -611,9 +612,7 @@
 
 
 
-        // CONFIGURACIÓN SUPABASE
-        const SUPABASE_URL = 'https://dsxtpgkdxkplwhrvbotg.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzeHRwZ2tkeGtwbHdocnZib3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5NjE2MzcsImV4cCI6MjA4NTUzNzYzN30.nY-PrzOyfmniy_nzZYIq36GWTwcb4ENIchOOA7cbc18';
+        // Uses shared config from js/supabase-config.js
 
         let RESTAURANTE_ID = null;
         let supabaseClient;
@@ -623,15 +622,8 @@
         // 1. Initialize & Check Session on Load
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-                    auth: {
-                        persistSession: true,
-                        storage: window.sessionStorage,
-                        autoRefreshToken: true,
-                        detectSessionInUrl: true
-                    }
-                });
-                console.log('Supabase Initialized');
+                supabaseClient = createSupabaseClient();
+                if (!supabaseClient) throw new Error('Supabase init failed');
 
                 // Allow a small grace period for session restoration
                 await new Promise(r => setTimeout(r, 500));
@@ -648,7 +640,13 @@
             const { data: { session } } = await supabaseClient.auth.getSession();
 
             if (!session) {
-                window.location.href = 'auth.html';
+                // DEV MODE: Skip login, load mock data
+                console.log('⚠️ DEV MODE: No session, loading mock data');
+                RESTAURANTE_ID = 'mock-id';
+                window.CURRENT_RESTAURANT_NAME = 'Pizzería Demo';
+                loadMockOrders();
+                renderOrders();
+                updateStats();
                 return;
             }
 
@@ -911,10 +909,6 @@
                             </div>
                         </div>
                     </div>
-                                <div>${order.metodo_pago}</div>
-                            </div>
-                        </div>
-                    </div>
                     
                     ${order.notas ? `<div style="margin: 1rem 0; padding: 1rem; background: #FEF3C7; border-radius: 12px;">
                         <strong>Nota:</strong> ${order.notas}
@@ -1009,45 +1003,8 @@
             document.getElementById('totalAmount').textContent = '$' + formatPrice(total);
         }
 
-        // Utilidades
-        function formatPrice(cents) {
-            return Number(cents).toLocaleString('es-AR');
-        }
-
-        function getTimeAgo(timestamp) {
-            const now = new Date();
-            const then = new Date(timestamp);
-            const diff = Math.floor((now - then) / 1000 / 60);
-
-            if (diff < 1) return 'Ahora';
-            if (diff < 60) return `${diff} min`;
-            if (diff < 1440) return `${Math.floor(diff / 60)} hs`;
-            return `${Math.floor(diff / 1440)} días`;
-        }
-
-        function isToday(timestamp) {
-            const today = new Date();
-            const date = new Date(timestamp);
-            return date.getDate() === today.getDate() &&
-                date.getMonth() === today.getMonth() &&
-                date.getFullYear() === today.getFullYear();
-        }
-
-        function playNotificationSound() {
-            // Agregar sonido de notificación
-            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBzGJ0fPTgjMGHm7A7+OZURE');
-            audio.play().catch(() => { });
-        }
-
-        function showError() {
-            document.getElementById('ordersContainer').innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">⚠️</div>
-                    <h3>Error de conexión</h3>
-                    <p>Verifica la configuración de Supabase</p>
-                </div>
-            `;
-        }
+        // Utilities: formatPrice, getTimeAgo, isToday, playNotificationSound
+        // are loaded from js/supabase-config.js
 
         // Mock data
         function loadMockOrders() {
@@ -1065,6 +1022,50 @@
                     pedido_items: [
                         { nombre: 'Pizza Muzzarella', cantidad: 1, subtotal: 350000 },
                         { nombre: 'Coca Cola 1.5L', cantidad: 1, subtotal: 100000 }
+                    ]
+                },
+                {
+                    id: '2',
+                    numero_pedido: '#12346',
+                    estado: 'preparando',
+                    cliente_nombre: 'María García',
+                    cliente_telefono: '297-7654321',
+                    cliente_direccion: 'San Martín 450',
+                    metodo_pago: 'Transferencia',
+                    total: 780000,
+                    created_at: new Date(Date.now() - 15 * 60000).toISOString(),
+                    pedido_items: [
+                        { nombre: 'Empanadas x12', cantidad: 1, subtotal: 480000 },
+                        { nombre: 'Pizza Especial', cantidad: 1, subtotal: 300000 }
+                    ]
+                },
+                {
+                    id: '3',
+                    numero_pedido: '#12347',
+                    estado: 'listo',
+                    cliente_nombre: 'Carlos López',
+                    cliente_telefono: '297-5551234',
+                    cliente_direccion: 'Rivadavia 1200',
+                    metodo_pago: 'Efectivo',
+                    total: 250000,
+                    created_at: new Date(Date.now() - 35 * 60000).toISOString(),
+                    pedido_items: [
+                        { nombre: 'Hamburguesa Completa', cantidad: 2, subtotal: 250000 }
+                    ]
+                },
+                {
+                    id: '4',
+                    numero_pedido: '#12348',
+                    estado: 'pendiente',
+                    cliente_nombre: 'Ana Rodríguez',
+                    cliente_telefono: '297-9998877',
+                    cliente_direccion: 'Belgrano 320',
+                    metodo_pago: 'MercadoPago',
+                    total: 620000,
+                    created_at: new Date(Date.now() - 2 * 60000).toISOString(),
+                    pedido_items: [
+                        { nombre: 'Sushi Combinado x20', cantidad: 1, subtotal: 520000 },
+                        { nombre: 'Sprite 1.5L', cantidad: 1, subtotal: 100000 }
                     ]
                 }
             ];
