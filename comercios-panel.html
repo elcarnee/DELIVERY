@@ -335,13 +335,41 @@
         }
 
         @media (max-width: 768px) {
-            .stats-bar {
+            .header-content {
                 flex-direction: column;
                 gap: 1rem;
             }
 
+            .stats-bar {
+                width: 100%;
+                justify-content: space-around;
+                gap: 0.5rem;
+                padding: 1rem;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .tab {
+                flex: 1 1 calc(50% - 0.5rem);
+                /* 2 columns on mobile */
+                font-size: 0.9rem;
+                padding: 0.75rem;
+            }
+
             .action-buttons {
                 flex-direction: column;
+            }
+
+            .btn {
+                padding: 1.25rem;
+                font-size: 1.1rem;
+            }
+
+            .order-card {
+                padding: 1.25rem;
             }
         }
     </style>

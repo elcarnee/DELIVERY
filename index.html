@@ -444,7 +444,8 @@
             bottom: 0;
             background: rgba(15, 23, 42, 0.7);
             backdrop-filter: blur(8px);
-            z-index: 1000;
+            z-index: 2001;
+            /* Above bottom-nav (1000) */
             align-items: center;
             justify-content: center;
             padding: 2rem;
@@ -596,9 +597,154 @@
             box-shadow: var(--shadow-lg);
         }
 
-        .add-button:active {
-            transform: scale(0.98);
+        /* Mobile Bottom Nav */
+        .bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.75rem 1.5rem;
+            z-index: 1000;
+            justify-content: space-around;
+            align-items: center;
+            padding-bottom: env(safe-area-inset-bottom, 0.75rem);
         }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--gray);
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-icon {
+            font-size: 1.5rem;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .bottom-nav {
+                display: flex;
+            }
+
+            .header {
+                padding: 0;
+            }
+
+            .header-content {
+                padding: 0.75rem 1rem;
+            }
+
+            .logo-text {
+                font-size: 1.25rem;
+            }
+
+            .logo-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1.5rem;
+                border-radius: 12px;
+            }
+
+            .location-badge {
+                display: none;
+                /* Hide location in header on mobile to save space */
+            }
+
+            .cart-button {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.875rem;
+            }
+
+            .cart-button {
+                /* Floating Action Button style above nav */
+                position: fixed;
+                bottom: calc(70px + env(safe-area-inset-bottom));
+                right: 1.5rem;
+                border-radius: 50px;
+                padding: 0.75rem 1.5rem;
+                box-shadow: var(--shadow-xl);
+                z-index: 999;
+                background: var(--primary);
+                color: var(--dark);
+                border: none;
+            }
+
+            .cart-button:hover {
+                transform: scale(1.05);
+                background: var(--primary-dark);
+            }
+
+            .main-content {
+                padding-bottom: 7rem;
+                /* Space for bottom nav */
+                margin-top: 1rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .restaurants-grid {
+                grid-template-columns: 1fr;
+                /* 1 Column */
+                gap: 1.5rem;
+            }
+
+            .restaurant-image-wrapper {
+                height: 180px;
+            }
+
+            /* Bottom Sheet Modal */
+            .modal {
+                position: fixed;
+                bottom: 0;
+                top: auto;
+                left: 0;
+                width: 100%;
+                max-width: 100%;
+                border-radius: 24px 24px 0 0;
+                max-height: 85vh;
+                transform: translateY(100%);
+                animation: slideUpMobile 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+
+            @keyframes slideUpMobile {
+                from {
+                    transform: translateY(100%);
+                }
+
+                to {
+                    transform: translateY(0);
+                }
+            }
+
+            .modal-header {
+                height: 200px;
+            }
+
+            .modal-close {
+                top: 1rem;
+                right: 1rem;
+                width: 40px;
+                height: 40px;
+                font-size: 1.25rem;
+            }
+        }
+
 
         /* Loading State */
         .loading {
@@ -669,22 +815,20 @@
                             style="font-weight: 400; font-size: 1.4rem; margin-left: 5px; color: var(--gray);">Delivery</span></span>
                 </div>
             </div>
-            <div style="display: flex; gap: 1rem; align-items: center;">
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
                 <div id="authButtons">
-                    <div id="authButtons">
-                        <!-- JS Swaps this button -->
-                        <button class="cart-button" onclick="window.location.href='auth.html'"
-                            style="background: transparent; border-color: rgba(255,255,255,0.2); color: white;">
-                            👤 Ingresar
-                        </button>
-                        <!-- LOGGED IN STATE (Hidden by default) -->
-                        <button id="profileBtn" class="cart-button" onclick="openProfileModal()"
-                            style="display:none; background: rgba(163, 230, 53, 0.2); color: var(--vero-lime); border: 1px solid var(--vero-lime);">
-                            👤 Mi Perfil
-                        </button>
-                    </div>
+                    <!-- JS Swaps this button -->
+                    <button class="cart-button" onclick="window.location.href='auth.html'"
+                        style="background: transparent; border-color: rgba(255,255,255,0.2); color: white; white-space: nowrap;">
+                        👤 Ingresar
+                    </button>
+                    <!-- LOGGED IN STATE (Hidden by default) -->
+                    <button id="profileBtn" class="cart-button" onclick="openProfileModal()"
+                        style="display:none; background: rgba(163, 230, 53, 0.2); color: var(--vero-lime); border: 1px solid var(--vero-lime); white-space: nowrap;">
+                        👤 Perfil
+                    </button>
                 </div>
-                <button class="cart-button" onclick="toggleCart()">
+                <button class="cart-button cart-button-desktop" onclick="toggleCart()">
                     <span>🛒</span>
                     <span>Carrito</span>
                     <span class="cart-count" id="cartCount">0</span>
@@ -1058,12 +1202,22 @@
 
         function updateCartUI() {
             const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-            document.getElementById('cartCount').innerText = count;
 
-            // Animación
-            const badge = document.getElementById('cartCount');
-            badge.style.transform = 'scale(1.2)';
-            setTimeout(() => badge.style.transform = 'scale(1)', 200);
+            // Update Desktop
+            const desktopBadge = document.getElementById('cartCount');
+            if (desktopBadge) desktopBadge.innerText = count;
+
+            // Update Mobile
+            const mobileBadge = document.getElementById('cartCountMobile');
+            if (mobileBadge) mobileBadge.innerText = count;
+
+            // Animation
+            [desktopBadge, mobileBadge].forEach(badge => {
+                if (badge) {
+                    badge.style.transform = 'scale(1.2)';
+                    setTimeout(() => badge.style.transform = 'scale(1)', 200);
+                }
+            });
         }
 
         function toggleCart() {
@@ -1818,6 +1972,83 @@
         async function logout() {
             await supabaseClient.auth.signOut();
             window.location.reload();
+        }
+    </script>
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active" onclick="switchNav('home')">
+            <span class="nav-icon">🏠</span>
+            <span>Inicio</span>
+        </a>
+        <a href="#search" class="nav-item"
+            onclick="switchNav('search'); document.querySelector('.search-input').focus()">
+            <span class="nav-icon">🔍</span>
+            <span>Buscar</span>
+        </a>
+        <a href="#" class="nav-item" onclick="openProfileModal()">
+            <span class="nav-icon">👤</span>
+            <span>Perfil</span>
+        </a>
+    </nav>
+
+    <!-- Mobile Cart FAB -->
+    <button id="mobileCartBtn" class="cart-fab" onclick="toggleCart()">
+        <span>🛒</span>
+        <span class="cart-count" id="cartCountMobile">0</span>
+    </button>
+
+    <style>
+        .cart-fab {
+            display: none;
+            /* Hidden on Desktop */
+            position: fixed;
+            bottom: calc(80px + env(safe-area-inset-bottom));
+            /* Above bottom nav */
+            right: 1.5rem;
+            background: var(--primary);
+            color: var(--dark);
+            border: none;
+            border-radius: 50px;
+            padding: 1rem 1.5rem;
+            font-weight: 700;
+            box-shadow: var(--shadow-xl);
+            z-index: 2000;
+            cursor: pointer;
+            align-items: center;
+            gap: 0.5rem;
+            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes bounceIn {
+            from {
+                transform: scale(0);
+            }
+
+            to {
+                transform: scale(1);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .cart-fab {
+                display: flex;
+                /* Show on Mobile */
+            }
+
+            /* Hide Desktop Cart Button inside Header */
+            .header .cart-button-desktop {
+                display: none !important;
+            }
+        }
+    </style>
+
+    <script>
+        function switchNav(tab) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            if (tab === 'home') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         }
     </script>
 </body>

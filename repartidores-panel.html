@@ -376,12 +376,37 @@
         }
 
         @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
             .stats-grid {
                 grid-template-columns: 1fr 1fr;
             }
 
             .action-buttons {
                 grid-template-columns: 1fr;
+                /* Stack buttons vertically */
+                gap: 0.75rem;
+            }
+
+            .btn {
+                padding: 1.25rem;
+                /* Larger touch targets */
+                font-size: 1.125rem;
+            }
+
+            .container {
+                padding: 0 1rem;
+            }
+
+            .delivery-amount {
+                font-size: 1.25rem;
+            }
+
+            .info-value {
+                font-size: 1rem;
             }
         }
     </style>
@@ -933,59 +958,59 @@
                     
                     <div class="action-buttons">
                         ${!isAssigned ? `
-                            <button class="btn btn-accept" onclick="acceptDelivery('${delivery.id}')">
+                            <button class="btn btn-accept" onclick="acceptDelivery('${delivery.id}')" style="width: 100%; border-radius: 16px; padding: 1.25rem;">
                                 ✓ Aceptar Entrega
                             </button>
-                            <button class="btn btn-reject" onclick="rejectDelivery('${delivery.id}')">
+                            <button class="btn btn-reject" onclick="rejectDelivery('${delivery.id}')" style="width: 100%; border-radius: 16px; padding: 1.25rem; margin-top: 0.5rem;">
                                 ✕ Rechazar
                             </button>
                         ` : `
-                            <div style="background:rgba(46, 204, 113, 0.1); padding:1rem; border-radius:8px; margin-bottom:1rem; border:1px solid var(--success);">
+                            <div style="background:rgba(46, 204, 113, 0.05); padding:1.25rem; border-radius:16px; margin-bottom:1rem; border:1px solid rgba(46, 204, 113, 0.2);">
                                 
                                 ${!delivery.retirado ? `
                                     <!-- STAGE 1: PICKUP -->
-                                    <h4 style="margin-bottom:0.5rem; color:var(--accent);">🏪 Paso 1: Ir al Local</h4>
+                                    <h4 style="margin-bottom:1rem; color:var(--accent); font-size:1.1rem;">🏪 Paso 1: Ir al Local</h4>
                                     
-                                    <div style="margin-bottom:1rem; background:rgba(0,0,0,0.2); padding:0.75rem; border-radius:8px;">
-                                        <div style="font-size:0.85rem; color:var(--gray); margin-bottom:0.25rem;">Dirección de retiro:</div>
-                                        <div style="font-weight:bold; color:white; margin-bottom:0.5rem;">${delivery.restaurante_direccion || 'Sin dirección'}</div>
+                                    <div style="margin-bottom:1.5rem; background:rgba(0,0,0,0.3); padding:1rem; border-radius:12px;">
+                                        <div style="font-size:0.9rem; color:var(--gray); margin-bottom:0.25rem;">Dirección de retiro:</div>
+                                        <div style="font-weight:bold; font-size:1.1rem; color:white; margin-bottom:0.75rem;">${delivery.restaurante_direccion || 'Sin dirección'}</div>
                                         
                                         <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(delivery.restaurante_direccion || '')}" target="_blank" 
-                                           class="btn" style="background:white; color:#0F172A; display:flex; align-items:center; justify-content:center; gap:0.5rem; text-decoration:none;">
-                                            📍 Ver Mapa del Local
+                                           class="btn" style="background:#3b82f6; color:white; display:flex; align-items:center; justify-content:center; gap:0.5rem; text-decoration:none; width:100%; padding:1.1rem; border-radius:12px; font-weight:700;">
+                                            🗺️ Abrir en Maps
                                         </a>
                                     </div>
 
-                                    <button class="btn" onclick="confirmPickup('${delivery.id}')" style="width:100%; background:var(--accent); color:white; padding:1rem; font-size:1.1rem; font-weight:bold; margin-bottom:0.5rem;">
-                                        📦 Confirmar Retiro
+                                    <button class="btn" onclick="confirmPickup('${delivery.id}')" style="width:100%; background:var(--accent); color:white; padding:1.25rem; font-size:1.2rem; font-weight:800; border-radius:16px; margin-bottom:0.5rem;">
+                                        📦 YA RETIRÉ EL PEDIDO
                                     </button>
 
                                 ` : `
                                     <!-- STAGE 2: DELIVERY -->
-                                    <h4 style="margin-bottom:0.5rem; color:var(--success);">🚀 Paso 2: Ir al Cliente</h4>
+                                    <h4 style="margin-bottom:1rem; color:var(--success); font-size:1.1rem;">🚀 Paso 2: Ir al Cliente</h4>
 
-                                    <div style="margin-bottom:1rem; background:rgba(0,0,0,0.2); padding:0.75rem; border-radius:8px;">
-                                        <div style="font-size:0.85rem; color:var(--gray); margin-bottom:0.25rem;">Entregar en:</div>
-                                        <div style="font-weight:bold; color:white; margin-bottom:0.5rem;">${delivery.cliente_direccion}</div>
+                                    <div style="margin-bottom:1.5rem; background:rgba(0,0,0,0.3); padding:1rem; border-radius:12px;">
+                                        <div style="font-size:0.9rem; color:var(--gray); margin-bottom:0.25rem;">Entregar en:</div>
+                                        <div style="font-weight:bold; font-size:1.1rem; color:white; margin-bottom:0.75rem;">${delivery.cliente_direccion}</div>
 
                                         <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(delivery.cliente_direccion)}" target="_blank" 
-                                           class="btn" style="background:white; color:#0F172A; display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom:0.5rem; text-decoration:none;">
-                                            📍 Ver Mapa del Cliente
+                                           class="btn" style="background:#3b82f6; color:white; display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom:0.5rem; text-decoration:none; width:100%; padding:1.1rem; border-radius:12px; font-weight:700;">
+                                            🗺️ Abrir en Maps
                                         </a>
                                     </div>
                                     
                                     <a href="tel:${delivery.cliente_telefono}" 
-                                       class="btn" style="background:rgba(255,255,255,0.1); color:white; display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom:1rem; text-decoration:none;">
-                                        📞 Llamar a Cliente
+                                       class="btn" style="background:rgba(255,255,255,0.1); color:white; display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom:1.5rem; text-decoration:none; width:100%; padding:1rem; border-radius:12px;">
+                                        📞 Llamar al Cliente
                                     </a>
 
-                                    <button class="btn btn-complete" onclick="completeDelivery('${delivery.id}')" style="width:100%; padding:1rem; font-size:1.1rem; margin-bottom:0.5rem;">
-                                        ✅ Marcar como Entregado
+                                    <button class="btn btn-complete" onclick="completeDelivery('${delivery.id}')" style="width:100%; padding:1.25rem; font-size:1.2rem; font-weight:800; background:var(--success); color:white; border-radius:16px; margin-bottom:0.5rem;">
+                                        ✅ ENTREGADO AL CLIENTE
                                     </button>
                                 `}
 
-                                <button class="btn" onclick="releaseDelivery('${delivery.id}')" style="width:100%; background:rgba(231, 76, 60, 0.1); color:#e74c3c; padding:0.8rem; font-size:0.9rem;">
-                                    ✕ Liberar Pedido (Cancelar)
+                                <button class="btn" onclick="releaseDelivery('${delivery.id}')" style="width:100%; background:transparent; color:var(--gray); border:1px solid rgba(255,255,255,0.1); padding:1rem; font-size:0.9rem; border-radius:12px; margin-top:1rem;">
+                                    ⚠️ Tuve un problema (Liberar pedido)
                                 </button>
                             </div>
                         `}
