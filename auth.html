@@ -222,6 +222,21 @@
             <button class="tab" onclick="switchTab('register')">Registrarse</button>
         </div>
 
+        <!-- Reset Password Form (hidden by default) -->
+        <form id="resetForm" onsubmit="handleResetPassword(event)" style="display: none;">
+            <div class="form-group">
+                <label class="label">Nueva Contraseña</label>
+                <input type="password" id="newPassword" class="input" placeholder="••••••••" required
+                    minlength="6">
+            </div>
+            <div class="form-group">
+                <label class="label">Confirmar Contraseña</label>
+                <input type="password" id="confirmPassword" class="input" placeholder="••••••••" required
+                    minlength="6">
+            </div>
+            <button type="submit" class="btn-submit" id="resetBtn">Cambiar Contraseña</button>
+        </form>
+
         <form id="authForm" onsubmit="handleAuth(event)">
 
             <div id="registerFields" style="display: none;">
@@ -258,6 +273,13 @@
             <div class="form-group">
                 <label class="label">Contraseña</label>
                 <input type="password" id="password" class="input" placeholder="••••••••" required>
+            </div>
+
+            <div id="forgotPasswordLink"
+                style="text-align: right; margin-top: -0.75rem; margin-bottom: 1.25rem;">
+                <a href="#" onclick="handleForgotPassword(event)"
+                    style="color: var(--gray-400); font-size: 0.8rem; text-decoration: none;">¿Olvidaste tu
+                    contraseña?</a>
             </div>
 
             <button type="submit" class="btn-submit" id="submitBtn">Ingresar</button>
@@ -301,18 +323,22 @@
             const toggleText = document.getElementById('toggleText');
             const toggleLink = document.getElementById('toggleLink');
 
+            const forgotLink = document.getElementById('forgotPasswordLink');
+
             if (tab === 'register') {
                 registerFields.style.display = 'block';
                 submitBtn.textContent = 'Crear Cuenta';
                 formTitle.textContent = 'Únete a VERO hoy';
                 toggleText.textContent = '¿Ya tienes cuenta?';
                 toggleLink.textContent = 'Ingresa aquí';
+                forgotLink.style.display = 'none';
             } else {
                 registerFields.style.display = 'none';
                 submitBtn.textContent = 'Ingresar';
                 formTitle.textContent = 'Bienvenido de nuevo';
                 toggleText.textContent = '¿No tienes cuenta?';
                 toggleLink.textContent = 'Regístrate aquí';
+                forgotLink.style.display = 'block';
             }
         }
 
@@ -323,8 +349,73 @@
             element.classList.add('selected');
         }
 
+        // Forgot Password Handler
+        async function handleForgotPassword(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            if (!email) {
+                showMessage('Ingresá tu correo electrónico primero', 'error');
+                return;
+            }
+            try {
+                const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+                    redirectTo: 'https://elcarnee.github.io/DELIVERY/auth.html'
+                });
+                if (error) throw error;
+                showMessage('Te enviamos un email para restablecer tu contraseña. Revisá tu bandeja de entrada.', 'success');
+            } catch (err) {
+                showMessage('Error: ' + err.message, 'error');
+            }
+        }
+
+        // Reset Password Handler
+        async function handleResetPassword(e) {
+            e.preventDefault();
+            const newPass = document.getElementById('newPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+            const resetBtn = document.getElementById('resetBtn');
+
+            if (newPass !== confirmPass) {
+                showMessage('Las contraseñas no coinciden', 'error');
+                return;
+            }
+            if (newPass.length < 6) {
+                showMessage('La contraseña debe tener al menos 6 caracteres', 'error');
+                return;
+            }
+
+            resetBtn.classList.add('btn-loading');
+            resetBtn.disabled = true;
+
+            try {
+                const { error } = await supabaseClient.auth.updateUser({ password: newPass });
+                if (error) throw error;
+                showMessage('Contraseña actualizada. Redirigiendo...', 'success');
+                setTimeout(() => { window.location.href = 'auth.html'; }, 2000);
+            } catch (err) {
+                showMessage('Error: ' + err.message, 'error');
+            } finally {
+                resetBtn.classList.remove('btn-loading');
+                resetBtn.disabled = false;
+            }
+        }
+
+        // Show reset form if recovery token detected
+        function showResetMode() {
+            document.getElementById('authForm').style.display = 'none';
+            document.getElementById('resetForm').style.display = 'block';
+            document.getElementById('formTitle').textContent = 'Nueva contraseña';
+        }
+
         // Init: Check URL params
         window.addEventListener('DOMContentLoaded', () => {
+            // Detect Supabase recovery token in URL hash
+            const hash = window.location.hash;
+            if (hash && hash.includes('type=recovery')) {
+                showResetMode();
+                return;
+            }
+
             const params = new URLSearchParams(window.location.search);
             const roleParam = params.get('role');
             const modeParam = params.get('mode');
