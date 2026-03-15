@@ -10,6 +10,7 @@
         rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
+    <script src="js/vero-modal.js"></script>
 
     <style>
         :root {
@@ -559,16 +560,7 @@
             const { data: { session } } = await supabaseClient.auth.getSession();
 
             if (!session) {
-                // DEV MODE: Skip login, load mock data
-                console.log('⚠️ DEV MODE: No session, loading mock data');
-                REPARTIDOR_ID = 'mock-driver-id';
-                isOnline = true;
-                updateOnlineStatusUI();
-                const profileBtn = document.querySelector('button[onclick="openProfile()"]');
-                if (profileBtn) profileBtn.innerText = '👤 Demo';
-                loadMockDeliveries();
-                renderDeliveries();
-                updateStats();
+                window.location.href = 'auth.html';
                 return;
             }
 
@@ -580,7 +572,7 @@
                 .single();
 
             if (userError || !user) {
-                alert('⚠️ Error verificando usuario. Inicia sesión nuevamente.');
+                await veroModal.alert('Error verificando usuario. Inicia sesión nuevamente.', { type: 'error' });
                 window.location.href = 'auth.html';
                 return;
             }
@@ -603,7 +595,7 @@
 
             if (driverError || !driver) {
                 console.warn('Usuario sin perfil de repartidor. Redirigiendo...');
-                alert('No tienes un perfil de repartidor activo. Cerrando sesión...');
+                await veroModal.alert('No tienes un perfil de repartidor activo. Cerrando sesión...', { type: 'error' });
                 await supabaseClient.auth.signOut();
                 window.location.href = 'auth.html';
                 return;
@@ -622,7 +614,7 @@
             // Update UI State
             updateOnlineStatusUI();
 
-            console.log('✅ Driver Panel Loaded for:', driver.nombre, `(${REPARTIDOR_ID})`);
+            // Driver panel loaded
             loadDeliveries();
             subscribeToChanges();
         }
@@ -652,7 +644,7 @@
 
             if (error) {
                 console.error('Error updating status:', error);
-                alert('Error actualizando estado');
+                veroModal.alert('Error actualizando estado', { type: 'error' });
                 // Revert
                 isOnline = !newState;
                 updateOnlineStatusUI();
@@ -740,7 +732,7 @@
                     allDeliveries = allDeliveries.filter(d => d.repartidor_id === REPARTIDOR_ID);
                 }
 
-                console.log('Deliveries loaded:', allDeliveries);
+                // Deliveries loaded
                 renderDeliveries();
                 updateStats();
 
@@ -766,7 +758,7 @@
                         table: 'pedidos'
                     },
                     (payload) => {
-                        console.log('Cambio detectado:', payload);
+                        // Cambio detectado
                         loadDeliveries();
                         playNotificationSound();
                     }
@@ -802,7 +794,7 @@
                 document.getElementById('profileModal').classList.add('active');
             } catch (err) {
                 console.error('Error fetching profile:', err);
-                alert('No se pudo cargar el perfil');
+                veroModal.alert('No se pudo cargar el perfil', { type: 'error' });
             }
         }
 
@@ -832,12 +824,12 @@
 
                 if (error) throw error;
 
-                alert('Perfil actualizado correctamente');
+                await veroModal.alert('Perfil actualizado correctamente', { type: 'success' });
                 closeProfile();
 
             } catch (error) {
                 console.error('Error saving profile:', error);
-                alert('Error al guardar: ' + error.message);
+                veroModal.alert('Error al guardar: ' + error.message, { type: 'error' });
             } finally {
                 btn.innerText = originalText;
                 btn.disabled = false;
@@ -845,7 +837,7 @@
         }
 
         async function deleteAccount() {
-            if (!confirm('🛑 ¿ESTÁS SEGURO?\n\nEsta acción eliminará permanentemente tu cuenta de repartidor y todos tus datos.\n\nNo se puede deshacer.')) {
+            if (!await veroModal.confirm('Esta acción eliminará permanentemente tu cuenta de repartidor y todos tus datos.\n\nNo se puede deshacer.', { type: 'error', title: '¿Estás seguro?', confirmText: 'Eliminar cuenta' })) {
                 return;
             }
 
@@ -855,14 +847,14 @@
 
                 if (error) throw error;
 
-                alert('Tu cuenta ha sido eliminada correctamente.');
+                await veroModal.alert('Tu cuenta ha sido eliminada correctamente.', { type: 'success' });
                 await supabaseClient.auth.signOut();
                 localStorage.clear();
                 window.location.href = 'auth.html';
 
             } catch (error) {
                 console.error('Error deleting account:', error);
-                alert('No se pudo eliminar el perfil: ' + error.message);
+                veroModal.alert('No se pudo eliminar el perfil: ' + error.message, { type: 'error' });
             }
         }
 
@@ -1021,7 +1013,7 @@
         // Acciones
 
         async function releaseDelivery(deliveryId) {
-            if (!confirm('¿Liberar este pedido? Volverá a estar disponible para otros repartidores.')) return;
+            if (!await veroModal.confirm('¿Liberar este pedido? Volverá a estar disponible para otros repartidores.', { type: 'warning', title: 'Liberar pedido', confirmText: 'Liberar' })) return;
 
             // OPTIMISTIC UPDATE
             const deliveryIndex = allDeliveries.findIndex(d => d.id === deliveryId);
@@ -1047,18 +1039,16 @@
 
                 if (error) {
                     console.error('Error details:', error);
-                    alert('Error detallado: ' + (error.message || JSON.stringify(error)));
+                    veroModal.alert('Error: ' + (error.message || 'Intenta nuevamente'), { type: 'error' });
                 } else {
-                    alert('Pedido liberado.');
+                    veroModal.alert('Pedido liberado correctamente.', { type: 'success' });
                     loadDeliveries();
                 }
-            } else {
-                // Mock
             }
         }
 
         async function confirmPickup(deliveryId) {
-            if (!confirm('¿Ya retiraste el pedido del local?')) return;
+            if (!await veroModal.confirm('¿Ya retiraste el pedido del local?', { type: 'info', title: 'Confirmar retiro', confirmText: 'Sí, ya lo tengo' })) return;
 
             // OPTIMISTIC UPDATE
             const deliveryIndex = allDeliveries.findIndex(d => d.id === deliveryId);
@@ -1075,14 +1065,14 @@
 
                 if (error) {
                     console.error('Error confirming pickup:', error);
-                    alert('Error actualizando pedido');
+                    veroModal.alert('Error actualizando pedido', { type: 'error' });
                     loadDeliveries(); // Revert
                 }
             }
         }
 
         async function acceptDelivery(deliveryId) {
-            if (!confirm('¿Aceptar esta entrega?')) return;
+            if (!await veroModal.confirm('¿Aceptar esta entrega?', { type: 'info', title: 'Aceptar entrega', confirmText: 'Aceptar' })) return;
 
             // OPTIMISTIC UPDATE
             const deliveryIndex = allDeliveries.findIndex(d => d.id === deliveryId);
@@ -1104,7 +1094,7 @@
 
                 if (error) {
                     console.error('Error accepting delivery:', error);
-                    alert('Error aceptando entrega');
+                    veroModal.alert('Error aceptando entrega', { type: 'error' });
                     loadDeliveries(); // Revert
                 }
             }
@@ -1205,7 +1195,7 @@
         }
 
         async function completeDelivery(deliveryId) {
-            if (!confirm('¿Confirmar que entregaste el pedido?')) return;
+            if (!await veroModal.confirm('¿Confirmar que entregaste el pedido?', { type: 'success', title: 'Completar entrega', confirmText: 'Entregado' })) return;
 
             if (supabaseClient) {
                 const { error } = await supabaseClient
@@ -1217,22 +1207,17 @@
                     .eq('id', deliveryId);
 
                 if (error) {
-                    alert('Error completando entrega');
+                    veroModal.alert('Error completando entrega', { type: 'error' });
                     console.error(error);
                 } else {
                     loadDeliveries();
                 }
-            } else {
-                // Mock
-                allDeliveries = allDeliveries.filter(d => d.id !== deliveryId);
-                renderDeliveries();
-                updateStats();
             }
         }
 
         async function rejectDelivery(deliveryId) {
             // "Reject" means hide it from my view locally for now
-            if (!confirm('¿Ocultar este pedido?')) return;
+            if (!await veroModal.confirm('¿Ocultar este pedido?', { type: 'warning', confirmText: 'Ocultar' })) return;
 
             // Remove from array
             allDeliveries = allDeliveries.filter(d => d.id !== deliveryId);
@@ -1249,55 +1234,6 @@
 
         // Utilities: formatPrice, playNotificationSound
         // are loaded from js/supabase-config.js
-
-        // Mock data
-        function loadMockDeliveries() {
-            allDeliveries = [
-                {
-                    id: '1',
-                    numero_pedido: '#12345',
-                    estado: 'en_camino',
-                    total: 450000,
-                    cliente_nombre: 'Juan Pérez',
-                    cliente_telefono: '297-1234567',
-                    cliente_direccion: 'Av. Tehuelches 200, Km3',
-                    metodo_pago: 'Efectivo',
-                    retirado: false,
-                    restaurante: { nombre: 'Puerto Mitre', direccion: 'San Martín 540, Centro' },
-                    restaurante_direccion: 'San Martín 540, Centro',
-                    repartidor_id: 'mock-driver-id'
-                },
-                {
-                    id: '2',
-                    numero_pedido: '#12346',
-                    estado: 'listo',
-                    total: 780000,
-                    cliente_nombre: 'María García',
-                    cliente_telefono: '297-7654321',
-                    cliente_direccion: 'Belgrano 320, Km4',
-                    metodo_pago: 'Transferencia',
-                    retirado: false,
-                    restaurante: { nombre: 'Sushi House', direccion: 'Rivadavia 800' },
-                    restaurante_direccion: 'Rivadavia 800',
-                    repartidor_id: null
-                },
-                {
-                    id: '3',
-                    numero_pedido: '#12347',
-                    estado: 'listo',
-                    total: 350000,
-                    cliente_nombre: 'Carlos López',
-                    cliente_telefono: '297-5551234',
-                    cliente_direccion: 'Roca 1500, Km5',
-                    metodo_pago: 'MercadoPago',
-                    retirado: false,
-                    restaurante: { nombre: 'Burger Lab', direccion: 'Pellegrini 250' },
-                    restaurante_direccion: 'Pellegrini 250',
-                    repartidor_id: null
-                }
-            ];
-        }
-
 
     </script>
 </body>

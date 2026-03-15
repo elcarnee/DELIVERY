@@ -22,7 +22,6 @@ function createSupabaseClient() {
                 detectSessionInUrl: true
             }
         });
-        console.log('✅ Supabase client initialized');
         return client;
     } catch (error) {
         console.error('❌ Supabase init failed:', error);

@@ -45,8 +45,6 @@ async function handleAuth(event) {
             if (authError) throw authError;
             if (!authData.user) throw new Error('No se pudo crear el usuario');
 
-            console.log('User created:', authData.user.id);
-
             // Map roles to DB expected values (Spanish)
             const roleMap = {
                 'consumer': 'cliente',
@@ -117,7 +115,6 @@ async function handleAuth(event) {
 
             if (authError) throw authError;
 
-            console.log('Logged in:', authData.user.id);
             showMessage('Sesión iniciada. Verificando rol...', 'success');
 
             // Fetch Role
@@ -138,7 +135,7 @@ async function handleAuth(event) {
 
     } catch (error) {
         console.error(error);
-        alert('Error: ' + error.message + '\n\nDetalles: ' + JSON.stringify(error));
+        veroModal.alert('Error: ' + error.message, { type: 'error', title: 'Error de autenticación' });
         showMessage(error.message, 'error');
     } finally {
         submitBtn.classList.remove('btn-loading');

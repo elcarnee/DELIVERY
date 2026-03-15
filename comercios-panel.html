@@ -10,6 +10,7 @@
         rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
+    <script src="js/vero-modal.js"></script>
 
     <style>
         :root {
@@ -640,13 +641,7 @@
             const { data: { session } } = await supabaseClient.auth.getSession();
 
             if (!session) {
-                // DEV MODE: Skip login, load mock data
-                console.log('⚠️ DEV MODE: No session, loading mock data');
-                RESTAURANTE_ID = 'mock-id';
-                window.CURRENT_RESTAURANT_NAME = 'Pizzería Demo';
-                loadMockOrders();
-                renderOrders();
-                updateStats();
+                window.location.href = 'auth.html';
                 return;
             }
 
@@ -658,7 +653,7 @@
                 .single();
 
             if (userError || !user) {
-                alert('⚠️ Error verificando usuario. Inicia sesión nuevamente.');
+                await veroModal.alert('Error verificando usuario. Inicia sesión nuevamente.', { type: 'error' });
                 window.location.href = 'auth.html';
                 return;
             }
@@ -696,7 +691,7 @@
             RESTAURANTE_ID = restaurant.id;
             window.CURRENT_RESTAURANT_NAME = restaurant.nombre;
 
-            console.log('✅ Panel Loaded for:', restaurant.nombre, `(${RESTAURANTE_ID})`);
+            // Panel loaded successfully
 
             // SYNC STATUS ON LOAD
             try {
@@ -730,7 +725,7 @@
             if (!RESTAURANTE_ID) return;
 
             const container = document.getElementById('ordersContainer');
-            console.log('Fetching orders for Restaurant:', RESTAURANTE_ID);
+            // Fetching orders
 
             try {
                 const { data, error } = await supabaseClient
@@ -757,7 +752,7 @@
 
                 if (error) throw error;
 
-                console.log('Orders loaded:', data);
+                // Orders loaded
                 allOrders = data;
                 renderOrders();
                 updateStats();
@@ -800,7 +795,7 @@
                         // filter: `restaurante_id=eq.${RESTAURANTE_ID}`
                     },
                     (payload) => {
-                        console.log('Cambio detectado:', payload);
+                        // Cambio detectado
                         loadOrders(); // Recargar pedidos
                         playNotificationSound();
                     }
@@ -943,7 +938,7 @@
 
         // Acciones
         async function acceptOrder(orderId) {
-            if (!confirm('¿Aceptar este pedido?')) return;
+            if (!await veroModal.confirm('¿Aceptar este pedido?', { type: 'info', title: 'Aceptar pedido', confirmText: 'Aceptar' })) return;
 
             await updateOrderStatus(orderId, 'confirmado');
         }
@@ -957,7 +952,7 @@
         }
 
         async function rejectOrder(orderId) {
-            if (!confirm('¿Rechazar este pedido? Esta acción no se puede deshacer.')) return;
+            if (!await veroModal.confirm('¿Rechazar este pedido? Esta acción no se puede deshacer.', { type: 'error', title: 'Rechazar pedido', confirmText: 'Rechazar' })) return;
 
             await updateOrderStatus(orderId, 'cancelado');
         }
@@ -970,17 +965,11 @@
                     .eq('id', orderId);
 
                 if (error) {
-                    alert('Error actualizando pedido');
+                    veroModal.alert('Error actualizando pedido', { type: 'error' });
                     console.error(error);
                 } else {
                     loadOrders();
                 }
-            } else {
-                // Mock
-                const order = allOrders.find(o => o.id === orderId);
-                if (order) order.estado = newStatus;
-                renderOrders();
-                updateStats();
             }
         }
 
@@ -1005,73 +994,6 @@
 
         // Utilities: formatPrice, getTimeAgo, isToday, playNotificationSound
         // are loaded from js/supabase-config.js
-
-        // Mock data
-        function loadMockOrders() {
-            allOrders = [
-                {
-                    id: '1',
-                    numero_pedido: '#12345',
-                    estado: 'pendiente',
-                    cliente_nombre: 'Juan Pérez',
-                    cliente_telefono: '297-1234567',
-                    cliente_direccion: 'Av. Tehuelches 200',
-                    metodo_pago: 'Efectivo',
-                    total: 450000,
-                    created_at: new Date().toISOString(),
-                    pedido_items: [
-                        { nombre: 'Pizza Muzzarella', cantidad: 1, subtotal: 350000 },
-                        { nombre: 'Coca Cola 1.5L', cantidad: 1, subtotal: 100000 }
-                    ]
-                },
-                {
-                    id: '2',
-                    numero_pedido: '#12346',
-                    estado: 'preparando',
-                    cliente_nombre: 'María García',
-                    cliente_telefono: '297-7654321',
-                    cliente_direccion: 'San Martín 450',
-                    metodo_pago: 'Transferencia',
-                    total: 780000,
-                    created_at: new Date(Date.now() - 15 * 60000).toISOString(),
-                    pedido_items: [
-                        { nombre: 'Empanadas x12', cantidad: 1, subtotal: 480000 },
-                        { nombre: 'Pizza Especial', cantidad: 1, subtotal: 300000 }
-                    ]
-                },
-                {
-                    id: '3',
-                    numero_pedido: '#12347',
-                    estado: 'listo',
-                    cliente_nombre: 'Carlos López',
-                    cliente_telefono: '297-5551234',
-                    cliente_direccion: 'Rivadavia 1200',
-                    metodo_pago: 'Efectivo',
-                    total: 250000,
-                    created_at: new Date(Date.now() - 35 * 60000).toISOString(),
-                    pedido_items: [
-                        { nombre: 'Hamburguesa Completa', cantidad: 2, subtotal: 250000 }
-                    ]
-                },
-                {
-                    id: '4',
-                    numero_pedido: '#12348',
-                    estado: 'pendiente',
-                    cliente_nombre: 'Ana Rodríguez',
-                    cliente_telefono: '297-9998877',
-                    cliente_direccion: 'Belgrano 320',
-                    metodo_pago: 'MercadoPago',
-                    total: 620000,
-                    created_at: new Date(Date.now() - 2 * 60000).toISOString(),
-                    pedido_items: [
-                        { nombre: 'Sushi Combinado x20', cantidad: 1, subtotal: 520000 },
-                        { nombre: 'Sprite 1.5L', cantidad: 1, subtotal: 100000 }
-                    ]
-                }
-            ];
-        }
-
-
 
         // ==========================================
         // PERFIL Y MENÚ (TABS LOGIC)
@@ -1147,13 +1069,13 @@
                     .eq('id', RESTAURANTE_ID);
 
                 if (error) throw error;
-                console.log('✅ Estado actualizado en DB:', isOpen);
+                // Estado actualizado
                 // Success
             } catch (error) {
                 console.error('Error toggling status:', error);
                 checkbox.checked = !isOpen; // Revert
                 updateStatusLabel(!isOpen);
-                alert('Error actualizando estado: ' + error.message);
+                veroModal.alert('Error actualizando estado: ' + error.message, { type: 'error' });
             }
         }
 
@@ -1166,13 +1088,13 @@
                     .eq('id', RESTAURANTE_ID);
 
                 if (error) throw error;
-                alert('✅ Horarios actualizados');
+                veroModal.alert('Horarios actualizados', { type: 'success' });
 
                 // Restart Auto-Close Check
                 startAutoCloseCheck(schedule);
             } catch (error) {
                 console.error('Error updating schedule:', error);
-                alert('Error actualizando horarios');
+                veroModal.alert('Error actualizando horarios', { type: 'error' });
             }
         }
 
@@ -1185,10 +1107,10 @@
                     .eq('id', RESTAURANTE_ID);
 
                 if (error) throw error;
-                alert('✅ Imagen de portada actualizada');
+                veroModal.alert('Imagen de portada actualizada', { type: 'success' });
             } catch (error) {
                 console.error('Error updating image:', error);
-                alert('Error actualizando imagen');
+                veroModal.alert('Error actualizando imagen', { type: 'error' });
             }
         }
 
@@ -1201,7 +1123,7 @@
                     .eq('id', RESTAURANTE_ID);
 
                 if (error) throw error;
-                alert('✅ Dirección actualizada');
+                veroModal.alert('Dirección actualizada', { type: 'success' });
             } catch (error) {
             }
         }
@@ -1222,7 +1144,7 @@
             const closeTimeStr = times[times.length - 1]; // Take the last one
             const [closeHour, closeMinute] = closeTimeStr.split(':').map(Number);
 
-            console.log(`⏰ Auto-close scheduled for ${closeHour}:${closeMinute}`);
+            // Auto-close scheduled
 
             autoCloseInterval = setInterval(() => {
                 const now = new Date();
@@ -1233,12 +1155,12 @@
                 if (currentHour === closeHour && currentMinute === closeMinute) {
                     const toggle = document.getElementById('storeToggle');
                     if (toggle && toggle.checked) {
-                        console.log('⏰ Closing time reached! Auto-closing...');
+                        // Closing time reached
                         toggle.checked = false;
                         toggleStoreStatus(toggle); // Determine if we should alert user or silently close? 
                         // toggleStoreStatus alerts on success, which is fine.
                         // Or maybe we want a specific notification.
-                        alert('🌙 Horario de cierre cumplido. El local se ha cerrado automáticamente.');
+                        veroModal.alert('Horario de cierre cumplido. El local se ha cerrado automáticamente.', { type: 'info', title: 'Cierre automático' });
                     }
                 }
             }, 60000); // Check every minute
@@ -1340,7 +1262,7 @@
                         .eq('id', EDITING_PRODUCT_ID);
 
                     if (error) throw error;
-                    alert('✅ Producto actualizado');
+                    veroModal.alert('Producto actualizado', { type: 'success' });
                     cancelEdit(); // Reset form mode
 
                 } else {
@@ -1366,7 +1288,7 @@
                 loadMenuManager();
 
             } catch (error) {
-                alert('Error al guardar producto: ' + error.message);
+                veroModal.alert('Error al guardar producto: ' + error.message, { type: 'error' });
             } finally {
                 btn.innerText = EDITING_PRODUCT_ID ? 'Guardar Cambios' : '+ Agregar Item';
                 btn.disabled = false;
@@ -1406,7 +1328,7 @@
 
 
         async function deleteProduct(id) {
-            if (!confirm('¿Eliminar este producto del menú?')) return;
+            if (!await veroModal.confirm('¿Eliminar este producto del menú?', { type: 'error', title: 'Eliminar producto', confirmText: 'Eliminar' })) return;
 
             try {
                 const { error } = await supabaseClient
@@ -1418,12 +1340,12 @@
                 loadMenuManager();
 
             } catch (error) {
-                alert('Error eliminando producto');
+                veroModal.alert('Error eliminando producto', { type: 'error' });
             }
         }
 
         async function deleteAccount() {
-            if (!confirm('🛑 ¿ESTÁS SEGURO?\n\nEsta acción eliminará permanentemente tu cuenta, tu restaurante y todos tus datos.\n\nNo se puede deshacer.')) return;
+            if (!await veroModal.confirm('Esta acción eliminará permanentemente tu cuenta, tu restaurante y todos tus datos.\n\nNo se puede deshacer.', { type: 'error', title: '¿Estás seguro?', confirmText: 'Eliminar cuenta' })) return;
 
             try {
                 // Call the secure RPC function to delete self (Auth + Data)
@@ -1431,13 +1353,13 @@
 
                 if (error) throw error;
 
-                alert('Tu cuenta ha sido eliminada correctamente. ¡Esperamos verte pronto!');
+                await veroModal.alert('Tu cuenta ha sido eliminada correctamente. ¡Esperamos verte pronto!', { type: 'success' });
                 await supabaseClient.auth.signOut();
                 window.location.href = 'auth.html';
 
             } catch (error) {
                 console.error('Error deleting account:', error);
-                alert('No se pudo eliminar la cuenta: ' + error.message);
+                veroModal.alert('No se pudo eliminar la cuenta: ' + error.message, { type: 'error' });
             }
         }
     </script>
