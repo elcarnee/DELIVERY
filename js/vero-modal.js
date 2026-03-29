@@ -7,6 +7,12 @@
 (function () {
     'use strict';
 
+    // Local reference to escapeHtml (from supabase-config.js) with inline fallback
+    const _esc = typeof escapeHtml === 'function' ? escapeHtml : function (str) {
+        if (str == null) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    };
+
     // Inject CSS
     const style = document.createElement('style');
     style.textContent = `
@@ -186,8 +192,8 @@
             const html = `
                 <div class="vero-modal-box">
                     <div class="vero-modal-icon">${cfg.icon}</div>
-                    ${title ? `<div class="vero-modal-title">${title}</div>` : ''}
-                    <div class="vero-modal-msg">${msg}</div>
+                    ${title ? `<div class="vero-modal-title">${_esc(title)}</div>` : ''}
+                    <div class="vero-modal-msg">${_esc(msg)}</div>
                     <div class="vero-modal-actions">
                         <button class="vero-modal-btn vero-modal-btn-primary" data-action="ok">Aceptar</button>
                     </div>
@@ -231,11 +237,11 @@
             const html = `
                 <div class="vero-modal-box">
                     <div class="vero-modal-icon">${cfg.icon}</div>
-                    ${title ? `<div class="vero-modal-title">${title}</div>` : ''}
-                    <div class="vero-modal-msg">${msg}</div>
+                    ${title ? `<div class="vero-modal-title">${_esc(title)}</div>` : ''}
+                    <div class="vero-modal-msg">${_esc(msg)}</div>
                     <div class="vero-modal-actions">
-                        <button class="vero-modal-btn vero-modal-btn-cancel" data-action="cancel">${cancelText}</button>
-                        <button class="vero-modal-btn ${btnClass}" data-action="confirm">${confirmText}</button>
+                        <button class="vero-modal-btn vero-modal-btn-cancel" data-action="cancel">${_esc(cancelText)}</button>
+                        <button class="vero-modal-btn ${btnClass}" data-action="confirm">${_esc(confirmText)}</button>
                     </div>
                 </div>
             `;
@@ -272,7 +278,7 @@
 
         const el = document.createElement('div');
         el.className = 'vero-modal-toast';
-        el.innerHTML = `<span>${cfg.icon}</span><span>${msg}</span>`;
+        el.innerHTML = `<span>${cfg.icon}</span><span>${_esc(msg)}</span>`;
         ensureRoot().appendChild(el);
 
         requestAnimationFrame(() => {

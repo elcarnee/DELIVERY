@@ -344,7 +344,9 @@
         }
 
         // Role Selector Handler
+        const ALLOWED_ROLES = ['consumer', 'commerce', 'driver'];
         function selectRole(role, element) {
+            if (!ALLOWED_ROLES.includes(role)) return;
             document.getElementById('selectedRole').value = role;
             document.querySelectorAll('.role-option').forEach(el => el.classList.remove('selected'));
             element.classList.add('selected');

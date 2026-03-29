@@ -51,7 +51,8 @@ async function handleAuth(event) {
                 'commerce': 'comercio',
                 'driver': 'repartidor'
             };
-            const dbRole = roleMap[role] || role;
+            const dbRole = roleMap[role];
+            if (!dbRole) throw new Error('Rol no válido');
 
             // 2. Insert into 'usuarios' table
             const { error: dbError } = await supabaseClient

@@ -1190,10 +1190,10 @@
                 title.innerText = `Elige hasta ${limit} opciones`;
                 container.innerHTML = options.map((opt, i) => `
                     <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:rgba(255,255,255,0.05); border-radius:8px;">
-                        <span style="color:white; font-size:1rem;">${opt}</span>
+                        <span style="color:white; font-size:1rem;">${escapeHtml(opt)}</span>
                         <div style="display:flex; gap:10px; align-items:center;">
                             <button onclick="updateFlavorCount(this, -1)" style="width:30px; height:30px; border-radius:50%; border:none; background:rgba(255,255,255,0.1); color:white; font-size:1.2rem; cursor:pointer;">-</button>
-                            <span class=" flavor-count" data-flavor="${opt}">0</span>
+                            <span class=" flavor-count" data-flavor="${escapeAttr(opt)}">0</span>
                             <button onclick="updateFlavorCount(this, 1)" style="width:30px; height:30px; border-radius:50%; border:none; background:var(--primary); color:#0F172A; font-weight:bold; font-size:1.2rem; cursor:pointer;">+</button>
                         </div>
                     </div>
@@ -1203,8 +1203,8 @@
                 title.innerText = `Elige una opción`;
                 container.innerHTML = options.map((opt, i) => `
                     <label style="display:flex; align-items:center; gap:10px; padding:10px; background:rgba(255,255,255,0.05); border-radius:8px; cursor:pointer;">
-                        <input type="radio" name="flavor" value="${opt}" ${i === 0 ? 'checked' : ''} style="accent-color:var(--primary);">
-                        <span style="color:white; font-size:1rem;">${opt}</span>
+                        <input type="radio" name="flavor" value="${escapeAttr(opt)}" ${i === 0 ? 'checked' : ''} style="accent-color:var(--primary);">
+                        <span style="color:white; font-size:1rem;">${escapeHtml(opt)}</span>
                     </label>
                 `).join('');
             }
@@ -1365,13 +1365,13 @@
                 return `
                     <div class="menu-item" style="padding: 1rem;">
                         <div class="menu-item-info">
-                            <div class="menu-item-name">${item.name}</div>
+                            <div class="menu-item-name">${escapeHtml(item.name)}</div>
                             <div class="menu-item-price">$${formatPrice(subtotal)}</div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 1rem;">
-                            <button onclick="removeFromCart('${item.id}')" style="background:#e2e8f0; border:none; width:30px; height:30px; border-radius:50%; font-weight:bold; cursor:pointer;">-</button>
+                            <button onclick="removeFromCart('${escapeAttr(item.id)}')" style="background:#e2e8f0; border:none; width:30px; height:30px; border-radius:50%; font-weight:bold; cursor:pointer;">-</button>
                             <span style="font-weight:600">${item.quantity}</span>
-                            <button onclick="addToCart('${item.id}', '${item.name}', ${item.price}, '${item.restaurantId}')" style="background:var(--primary); color:white; border:none; width:30px; height:30px; border-radius:50%; font-weight:bold; cursor:pointer;">+</button>
+                            <button onclick="addToCart('${escapeAttr(item.id)}', '${escapeAttr(item.name)}', ${item.price}, '${escapeAttr(item.restaurantId)}')" style="background:var(--primary); color:white; border:none; width:30px; height:30px; border-radius:50%; font-weight:bold; cursor:pointer;">+</button>
                         </div>
                     </div>
                 `;
@@ -1441,42 +1441,68 @@
                 const restaurant = allRestaurants.find(r => r.id === currentRestaurantId);
                 const costoEnvio = restaurant ? restaurant.costo_envio : 0;
 
-                // 1. Crear Pedido
-                const { data: order, error: orderError } = await supabaseClient
-                    .from('pedidos')
-                    .insert({
-                        restaurante_id: currentRestaurantId,
-                        cliente_id: window.PROFILE_ID, // Use Client Profile ID (matches 'clientes' table)
-                        numero_pedido: orderNumber,
-                        cliente_nombre: name,
-                        cliente_telefono: phone,
-                        cliente_direccion: address,
-                        metodo_pago: payment,
-                        notas: notes,
-                        total: total,
-                        subtotal: total, // DB requires subtotal
-                        costo_envio: costoEnvio,
-                        estado: 'pendiente'
-                    })
-                    .select()
-                    .single();
+                let createdOrderId = null;
 
-                if (orderError) throw orderError;
+                // Try RPC first (atomic server-side order creation)
+                const { data: rpcData, error: rpcError } = await supabaseClient.rpc('create_order', {
+                    p_cliente_id: window.PROFILE_ID,
+                    p_restaurante_id: cart[0].restaurantId,
+                    p_items: cart.map(item => ({ menu_item_id: item.id, cantidad: item.quantity, notas: item.notes || '' })),
+                    p_direccion: address,
+                    p_telefono: phone,
+                    p_metodo_pago: payment,
+                    p_notas: notes || ''
+                });
 
-                // 2. Crear Items
-                const orderItems = cart.map(item => ({
-                    pedido_id: order.id,
-                    nombre: item.name,
-                    cantidad: item.quantity,
-                    precio_unitario: item.price,
-                    subtotal: item.price * item.quantity
-                }));
+                if (rpcError && (rpcError.message || '').includes('function') && (rpcError.message || '').includes('does not exist') || rpcError && rpcError.code === '42883') {
+                    // RPC not available, fall back to direct inserts
+                    console.warn('create_order RPC not available, falling back to direct inserts');
 
-                const { error: itemsError } = await supabaseClient
-                    .from('pedido_items')
-                    .insert(orderItems);
+                    // 1. Crear Pedido
+                    const { data: order, error: orderError } = await supabaseClient
+                        .from('pedidos')
+                        .insert({
+                            restaurante_id: currentRestaurantId,
+                            cliente_id: window.PROFILE_ID,
+                            numero_pedido: orderNumber,
+                            cliente_nombre: name,
+                            cliente_telefono: phone,
+                            cliente_direccion: address,
+                            metodo_pago: payment,
+                            notas: notes,
+                            total: total,
+                            subtotal: total,
+                            costo_envio: costoEnvio,
+                            estado: 'pendiente'
+                        })
+                        .select()
+                        .single();
 
-                if (itemsError) throw itemsError;
+                    if (orderError) throw orderError;
+
+                    // 2. Crear Items
+                    const orderItems = cart.map(item => ({
+                        pedido_id: order.id,
+                        nombre: item.name,
+                        cantidad: item.quantity,
+                        precio_unitario: item.price,
+                        subtotal: item.price * item.quantity
+                    }));
+
+                    const { error: itemsError } = await supabaseClient
+                        .from('pedido_items')
+                        .insert(orderItems);
+
+                    if (itemsError) throw itemsError;
+
+                    createdOrderId = order.id;
+                } else if (rpcError) {
+                    // RPC exists but returned a different error
+                    throw rpcError;
+                } else {
+                    // RPC succeeded
+                    createdOrderId = rpcData;
+                }
 
                 // Éxito
                 cart = [];
@@ -1486,7 +1512,7 @@
                 toggleCart();
 
                 // Abrir tracking en tiempo real
-                openTracking(order.id);
+                openTracking(createdOrderId);
 
             } catch (error) {
                 console.error('Error enviando pedido:', error);
@@ -1586,10 +1612,10 @@
             container.innerHTML = `
                 <div class="restaurants-grid">
                     ${restaurants.map((r, i) => `
-                        <div class="restaurant-card" style="--delay: ${i * 0.05}s" onclick="openRestaurant('${r.id}')">
+                        <div class="restaurant-card" style="--delay: ${i * 0.05}s" onclick="openRestaurant('${escapeAttr(r.id)}')">
                             <div class="restaurant-image-wrapper">
-                                <img src="${r.imagen_url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400'}" 
-                                     alt="${r.nombre}" 
+                                <img src="${r.imagen_url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400'}"
+                                     alt="${escapeAttr(r.nombre)}"
                                      class="restaurant-image">
                                 <div class="restaurant-badges">
                                     ${r.calificacion >= 4.7 ? '<span class="badge badge-popular">Popular</span>' : ''}
@@ -1600,11 +1626,11 @@
                                 </div>
                             </div>
                             <div class="restaurant-info">
-                                <h3 class="restaurant-name">${r.nombre}</h3>
-                                <p class="restaurant-category">${r.descripcion || r.categoria}</p>
+                                <h3 class="restaurant-name">${escapeHtml(r.nombre)}</h3>
+                                <p class="restaurant-category">${escapeHtml(r.descripcion || r.categoria)}</p>
                                 <div class="restaurant-meta">
                                     <span class="meta-item">
-                                        🕒 ${r.horarios || 'Consultar'}
+                                        🕒 ${escapeHtml(r.horarios || 'Consultar')}
                                     </span>
                                     <span class="meta-item">
                                         🕐 ${r.tiempo_preparacion} min
@@ -1614,11 +1640,11 @@
                                     </span>
                                     <span class="meta-item">
                                         📍 <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.direccion || r.zona)}" target="_blank" style="color:inherit; text-decoration:none; hover:underline;">
-                                            ${r.direccion || r.zona}
+                                            ${escapeHtml(r.direccion || r.zona)}
                                         </a>
                                     </span>
                                 </div>
-                                <div style="font-size:0.7rem; color:#ccc; margin-top:0.5rem;">ID: ${r.id.slice(0, 8)}...</div>
+                                <div style="font-size:0.7rem; color:#ccc; margin-top:0.5rem;">ID: ${escapeHtml(r.id.slice(0, 8))}...</div>
                             </div>
                         </div>
                     `).join('')}
@@ -1668,10 +1694,10 @@
                 content.innerHTML = `
                     <div style="margin-bottom: 2rem;">
                         <h1 style="font-family: 'Poppins', sans-serif; font-size: 2.5rem; font-weight: 700; margin-bottom: 0.75rem;">
-                            ${restaurant.nombre}
+                            ${escapeHtml(restaurant.nombre)}
                         </h1>
                         <p style="color: var(--gray); font-size: 1.125rem; margin-bottom: 1rem;">
-                            ${restaurant.descripcion}
+                            ${escapeHtml(restaurant.descripcion)}
                         </p>
                         <div style="display: flex; gap: 1rem; flex-wrap: wrap; color: var(--gray);">
                             <span style="display: flex; align-items: center; gap: 0.5rem;">
@@ -1681,12 +1707,12 @@
                             <span>🛵 $${restaurant.costo_envio}</span>
                             <span>
                                 📍 <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.direccion || restaurant.zona)}" target="_blank" style="color:var(--primary); text-decoration:none;">
-                                    ${restaurant.direccion || restaurant.zona}
+                                    ${escapeHtml(restaurant.direccion || restaurant.zona)}
                                 </a>
                             </span>
                         </div>
                     </div>
-                    
+
                     ${Object.keys(menuByCategory).length === 0 ? `
                         <div class="empty-state">
                             <div class="empty-icon">📋</div>
@@ -1695,19 +1721,19 @@
                         </div>
                     ` : Object.keys(menuByCategory).map(category => `
                         <div class="menu-section">
-                            <h3 class="menu-section-title">${category}</h3>
+                            <h3 class="menu-section-title">${escapeHtml(category)}</h3>
                             ${menuByCategory[category].map(item => `
                                 <div class="menu-item" style="display: flex; gap: 1rem; align-items: center;">
                                     ${item.imagen_url ? `
-                                        <img src="${item.imagen_url}" alt="${item.nombre}" 
+                                        <img src="${item.imagen_url}" alt="${escapeAttr(item.nombre)}"
                                              style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
                                     ` : ''}
                                     <div class="menu-item-info" style="flex: 1;">
-                                        <div class="menu-item-name">${item.nombre}</div>
-                                        <div class="menu-item-description">${item.descripcion || ''}</div>
+                                        <div class="menu-item-name">${escapeHtml(item.nombre)}</div>
+                                        <div class="menu-item-description">${escapeHtml(item.descripcion || '')}</div>
                                         <div class="menu-item-price">$${formatPrice(item.precio)}</div>
                                     </div>
-                                    <button class="add-button" onclick="addToCart('${item.id}', '${item.nombre}', ${item.precio}, '${restaurant.id}', '${(item.opciones || '').replace(/'/g, "\\'")}', ${item.limite_opciones || 1})">
+                                    <button class="add-button" data-action="add-to-cart" data-item-id="${escapeAttr(item.id)}" data-item-name="${escapeAttr(item.nombre)}" data-item-price="${item.precio}" data-item-restaurant-id="${escapeAttr(restaurant.id)}" data-item-restaurant-name="${escapeAttr(restaurant.nombre)}" data-item-options="${escapeAttr(item.opciones || '')}" data-item-limit="${item.limite_opciones || 1}">
                                         Agregar
                                     </button>
                                 </div>
@@ -1715,6 +1741,19 @@
                         </div>
                     `).join('')}
                 `;
+
+                // Event delegation for add-to-cart buttons
+                content.addEventListener('click', function(e) {
+                    const btn = e.target.closest('[data-action="add-to-cart"]');
+                    if (!btn) return;
+                    const itemId = btn.getAttribute('data-item-id');
+                    const itemName = btn.getAttribute('data-item-name');
+                    const itemPrice = parseFloat(btn.getAttribute('data-item-price'));
+                    const restaurantId = btn.getAttribute('data-item-restaurant-id');
+                    const optionsStr = btn.getAttribute('data-item-options');
+                    const limit = parseInt(btn.getAttribute('data-item-limit')) || 1;
+                    addToCart(itemId, itemName, itemPrice, restaurantId, optionsStr, limit);
+                });
             } catch (error) {
                 console.error('Error cargando restaurante:', error);
                 content.innerHTML = `
@@ -1808,12 +1847,12 @@
                 <div class="tracking-meta">
                     <div class="tracking-meta-row">
                         <span class="tracking-meta-label">Restaurante</span>
-                        <span class="tracking-meta-value">${order.restaurantes?.nombre || 'Restaurante'}</span>
+                        <span class="tracking-meta-value">${escapeHtml(order.restaurantes?.nombre || 'Restaurante')}</span>
                     </div>
                     ${order.repartidores ? `
                     <div class="tracking-meta-row">
                         <span class="tracking-meta-label">Repartidor</span>
-                        <span class="tracking-meta-value">${order.repartidores.nombre}</span>
+                        <span class="tracking-meta-value">${escapeHtml(order.repartidores.nombre)}</span>
                     </div>
                     ` : ''}
                     <div class="tracking-meta-row">
@@ -1822,7 +1861,7 @@
                     </div>
                     <div class="tracking-meta-row">
                         <span class="tracking-meta-label">Método de pago</span>
-                        <span class="tracking-meta-value">${order.metodo_pago || 'Efectivo'}</span>
+                        <span class="tracking-meta-value">${escapeHtml(order.metodo_pago || 'Efectivo')}</span>
                     </div>
                     <div class="tracking-meta-row">
                         <span class="tracking-meta-label">Tiempo transcurrido</span>
@@ -2167,9 +2206,9 @@
                 container.innerHTML = orders.map(o => {
                     const isActive = activeStates.includes(o.estado);
                     return `
-                    <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); ${isActive ? 'cursor:pointer;' : ''}" ${isActive ? `onclick="closeProfileModal(); openTracking('${o.id}')"` : ''}>
+                    <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); ${isActive ? 'cursor:pointer;' : ''}" ${isActive ? `onclick="closeProfileModal(); openTracking('${escapeAttr(o.id)}')"` : ''}>
                         <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
-                            <span style="font-weight:bold; color:white;">${o.restaurantes?.nombre || 'Restaurante'}</span>
+                            <span style="font-weight:bold; color:white;">${escapeHtml(o.restaurantes?.nombre || 'Restaurante')}</span>
                             <span style="color:var(--gray); font-size:0.9rem;">${new Date(o.created_at).toLocaleDateString()}</span>
                         </div>
                         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -2185,8 +2224,8 @@
                         ` : ''}
                         ${o.estado === 'entregado' ? `
                             <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.1); display:flex; gap:1rem;">
-                                <button onclick="event.stopPropagation(); rateOrder('${o.id}', 'restaurant')" style="flex:1; padding:0.5rem; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer;">⭐ Calificar Local</button>
-                                <button onclick="event.stopPropagation(); rateOrder('${o.id}', 'driver')" style="flex:1; padding:0.5rem; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer;">🛵 Calificar Repartidor</button>
+                                <button onclick="event.stopPropagation(); rateOrder('${escapeAttr(o.id)}', 'restaurant')" style="flex:1; padding:0.5rem; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer;">⭐ Calificar Local</button>
+                                <button onclick="event.stopPropagation(); rateOrder('${escapeAttr(o.id)}', 'driver')" style="flex:1; padding:0.5rem; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer;">🛵 Calificar Repartidor</button>
                             </div>
                         ` : ''}
                     </div>

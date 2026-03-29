@@ -62,6 +62,20 @@ function getTimeAgo(timestamp) {
 }
 
 /**
+ * Security: Escape HTML entities to prevent XSS
+ */
+function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+const escapeAttr = escapeHtml;
+
+/**
  * Utility: Play notification sound
  */
 function playNotificationSound() {

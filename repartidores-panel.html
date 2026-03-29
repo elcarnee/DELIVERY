@@ -551,7 +551,7 @@
                 await checkSession();
             } catch (error) {
                 console.error('Init Error:', error);
-                document.getElementById('deliveriesContainer').innerHTML = `<div class="empty-state" style="color:red">Error de conexión: ${error.message}</div>`;
+                document.getElementById('deliveriesContainer').innerHTML = `<div class="empty-state" style="color:red">Error de conexión: ${escapeHtml(error.message)}</div>`;
             }
         });
 
@@ -741,7 +741,7 @@
                 container.innerHTML = `
                     <div class="empty-state" style="color:red">
                         <h3>⚠️ Error cargando entregas</h3>
-                        <p>${error.message}</p>
+                        <p>${escapeHtml(error.message)}</p>
                     </div>
                 `;
             }
@@ -758,6 +758,11 @@
                         table: 'pedidos'
                     },
                     (payload) => {
+                        // Guard: only react to relevant order states
+                        const relevantStates = ['listo', 'en_camino', 'entregado'];
+                        if (payload.new && !relevantStates.includes(payload.new.estado)) return;
+                        // Guard: ignore orders assigned to other drivers
+                        if (payload.new && payload.new.repartidor_id && payload.new.repartidor_id !== REPARTIDOR_ID) return;
                         // Cambio detectado
                         loadDeliveries();
                         playNotificationSound();
@@ -894,53 +899,53 @@
             return `
                 <div class="delivery-card">
                     <div class="delivery-header">
-                        <div class="delivery-number">${delivery.numero_pedido}</div>
+                        <div class="delivery-number">${escapeHtml(delivery.numero_pedido)}</div>
                         <div class="delivery-amount">$${formatPrice(delivery.total)}</div>
                     </div>
-                    
+
                     <div class="delivery-info">
                         <div class="info-row">
                             <span class="info-icon">🏪</span>
                             <div class="info-content">
                                 <div class="info-label">Retirar en:</div>
-                                <div class="info-value">${delivery.restaurante?.nombre || 'Restaurante Desconocido'}</div>
+                                <div class="info-value">${escapeHtml(delivery.restaurante?.nombre || 'Restaurante Desconocido')}</div>
                                 <div style="font-size: 0.875rem; color: var(--gray); margin-top: 0.25rem;">
-                                    ${delivery.restaurante?.direccion || 'Sin dirección'}
+                                    ${escapeHtml(delivery.restaurante?.direccion || 'Sin dirección')}
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="info-row">
                             <span class="info-icon">📍</span>
                             <div class="info-content">
                                 <div class="info-label">Entregar a:</div>
-                                <div class="info-value">${delivery.cliente_nombre}</div>
+                                <div class="info-value">${escapeHtml(delivery.cliente_nombre)}</div>
                                 <div style="font-size: 0.875rem; color: var(--gray); margin-top: 0.25rem;">
-                                    ${delivery.cliente_direccion}
+                                    ${escapeHtml(delivery.cliente_direccion)}
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="info-row">
                             <span class="info-icon">📞</span>
                             <div class="info-content">
                                 <div class="info-label">Contacto:</div>
-                                <div class="info-value">${delivery.cliente_telefono}</div>
+                                <div class="info-value">${escapeHtml(delivery.cliente_telefono)}</div>
                             </div>
                         </div>
-                        
+
                         <div class="info-row">
                             <span class="info-icon">💳</span>
                             <div class="info-content">
                                 <div class="info-label">Pago:</div>
-                                <div class="info-value">${delivery.metodo_pago}</div>
+                                <div class="info-value">${escapeHtml(delivery.metodo_pago)}</div>
                             </div>
-                            
+
                             <div class="info-row" style="margin-top:0.5rem; padding-top:0.5rem; border-top:1px solid rgba(255,255,255,0.1);">
                                 <div class="info-label">📍 Retiro</div>
                                 <div class="info-value">
                                     <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(delivery.restaurante_direccion || '')}" target="_blank" style="color:var(--primary); text-decoration:none;">
-                                        ${delivery.restaurante_direccion || 'Sin dirección'} 🔗
+                                        ${escapeHtml(delivery.restaurante_direccion || 'Sin dirección')} 🔗
                                     </a>
                                 </div>
                             </div>
@@ -964,7 +969,7 @@
                                     
                                     <div style="margin-bottom:1.5rem; background:rgba(0,0,0,0.3); padding:1rem; border-radius:12px;">
                                         <div style="font-size:0.9rem; color:var(--gray); margin-bottom:0.25rem;">Dirección de retiro:</div>
-                                        <div style="font-weight:bold; font-size:1.1rem; color:white; margin-bottom:0.75rem;">${delivery.restaurante_direccion || 'Sin dirección'}</div>
+                                        <div style="font-weight:bold; font-size:1.1rem; color:white; margin-bottom:0.75rem;">${escapeHtml(delivery.restaurante_direccion || 'Sin dirección')}</div>
                                         
                                         <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(delivery.restaurante_direccion || '')}" target="_blank" 
                                            class="btn" style="background:#3b82f6; color:white; display:flex; align-items:center; justify-content:center; gap:0.5rem; text-decoration:none; width:100%; padding:1.1rem; border-radius:12px; font-weight:700;">
@@ -982,7 +987,7 @@
 
                                     <div style="margin-bottom:1.5rem; background:rgba(0,0,0,0.3); padding:1rem; border-radius:12px;">
                                         <div style="font-size:0.9rem; color:var(--gray); margin-bottom:0.25rem;">Entregar en:</div>
-                                        <div style="font-weight:bold; font-size:1.1rem; color:white; margin-bottom:0.75rem;">${delivery.cliente_direccion}</div>
+                                        <div style="font-weight:bold; font-size:1.1rem; color:white; margin-bottom:0.75rem;">${escapeHtml(delivery.cliente_direccion)}</div>
 
                                         <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(delivery.cliente_direccion)}" target="_blank" 
                                            class="btn" style="background:#3b82f6; color:white; display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom:0.5rem; text-decoration:none; width:100%; padding:1.1rem; border-radius:12px; font-weight:700;">
@@ -1035,7 +1040,8 @@
                         hora_en_camino: null,
                         retirado: false // Reset
                     })
-                    .eq('id', deliveryId);
+                    .eq('id', deliveryId)
+                    .eq('repartidor_id', REPARTIDOR_ID);
 
                 if (error) {
                     console.error('Error details:', error);
@@ -1061,7 +1067,8 @@
                 const { error } = await supabaseClient
                     .from('pedidos')
                     .update({ retirado: true })
-                    .eq('id', deliveryId);
+                    .eq('id', deliveryId)
+                    .eq('repartidor_id', REPARTIDOR_ID);
 
                 if (error) {
                     console.error('Error confirming pickup:', error);
@@ -1083,14 +1090,16 @@
             }
 
             if (supabaseClient) {
-                const { error } = await supabaseClient
+                const { error, count } = await supabaseClient
                     .from('pedidos')
                     .update({
                         repartidor_id: REPARTIDOR_ID,
                         estado: 'en_camino',
                         hora_en_camino: new Date().toISOString()
                     })
-                    .eq('id', deliveryId);
+                    .eq('id', deliveryId)
+                    .eq('estado', 'listo')
+                    .is('repartidor_id', null);
 
                 if (error) {
                     console.error('Error accepting delivery:', error);
@@ -1173,14 +1182,14 @@
                 container.innerHTML = data.map(order => `
                     <div class="delivery-card" style="opacity:0.8;">
                         <div class="delivery-header">
-                            <div class="delivery-number">#${order.numero_pedido}</div>
+                            <div class="delivery-number">#${escapeHtml(order.numero_pedido)}</div>
                             <div class="delivery-amount" style="color:var(--success);">$${formatPrice(order.total)}</div>
                         </div>
                         <div style="color:var(--gray); font-size:0.9rem; margin-bottom:0.5rem;">
                             📅 ${new Date(order.created_at).toLocaleDateString()} ${new Date(order.created_at).toLocaleTimeString().slice(0, 5)}
                         </div>
                         <div style="font-weight:bold; margin-bottom:0.25rem;">
-                            🏪 ${order.restaurante?.nombre || 'Restaurante'}
+                            🏪 ${escapeHtml(order.restaurante?.nombre || 'Restaurante')}
                         </div>
                         <div class="badge badge-success" style="display:inline-block; margin-top:0.5rem;">
                             ✅ Entregado
@@ -1190,7 +1199,7 @@
 
             } catch (error) {
                 console.error('Error loading history:', error);
-                container.innerHTML = `<div style="color:red; padding:1rem;">Error cargando historial: ${error.message}</div>`;
+                container.innerHTML = `<div style="color:red; padding:1rem;">Error cargando historial: ${escapeHtml(error.message)}</div>`;
             }
         }
 
@@ -1204,7 +1213,8 @@
                         estado: 'entregado',
                         hora_entregado: new Date().toISOString()
                     })
-                    .eq('id', deliveryId);
+                    .eq('id', deliveryId)
+                    .eq('repartidor_id', REPARTIDOR_ID);
 
                 if (error) {
                     veroModal.alert('Error completando entrega', { type: 'error' });
