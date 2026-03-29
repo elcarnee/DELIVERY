@@ -159,9 +159,40 @@
         return TYPE_CONFIG[type] || TYPE_CONFIG.info;
     }
 
+    // Focus trap: keep Tab within modal
+    function trapFocus(overlay) {
+        function handler(e) {
+            if (e.key !== 'Tab') return;
+            const focusable = overlay.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            if (focusable.length === 0) return;
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (e.shiftKey) {
+                if (document.activeElement === first) {
+                    e.preventDefault();
+                    last.focus();
+                }
+            } else {
+                if (document.activeElement === last) {
+                    e.preventDefault();
+                    first.focus();
+                }
+            }
+        }
+        overlay.addEventListener('keydown', handler);
+        // Auto-focus first button
+        requestAnimationFrame(() => {
+            const first = overlay.querySelector('button');
+            if (first) first.focus();
+        });
+        return handler;
+    }
+
     function showModal(html) {
         const overlay = document.createElement('div');
         overlay.className = 'vero-modal-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
         overlay.innerHTML = html;
         ensureRoot().appendChild(overlay);
 
@@ -169,6 +200,9 @@
         requestAnimationFrame(() => {
             overlay.classList.add('vero-modal-visible');
         });
+
+        // Enable focus trap
+        trapFocus(overlay);
 
         return overlay;
     }

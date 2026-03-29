@@ -237,24 +237,55 @@ function renderCart() {
 // ==========================================
 let isCheckingOut = false;
 
-function proceedToCheckout() {
+async function proceedToCheckout() {
     const form = document.getElementById('checkoutForm');
     const btn = document.getElementById('checkoutButton');
 
     if (form.style.display === 'none') {
-        form.style.display = 'block';
-        btn.innerText = 'Confirmar Pedido';
+        // --- Session check BEFORE showing the checkout form ---
+        try {
+            const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
 
+            if (sessionError || \!session) {
+                const goToLogin = await veroModal.confirm(
+                    'Debes iniciar sesión para realizar un pedido. ¿Quieres ir a la página de login?',
+                    { type: 'warning', title: 'Sesión requerida' }
+                );
+                if (goToLogin) {
+                    window.location.href = 'auth.html';
+                }
+                return;
+            }
 
-        // Auto-fill from Profile if logged in
-        if (window.PROFILE_ID) {
-            const pName = document.getElementById('profileName').value;
-            const pPhone = document.getElementById('profilePhone').value;
-            const pAddr = document.getElementById('profileAddress').value;
+            // Session exists - show the checkout form
+            form.style.display = 'block';
+            btn.innerText = 'Confirmar Pedido';
 
-            if (pName) document.getElementById('customerName').value = pName;
-            if (pPhone) document.getElementById('customerPhone').value = pPhone;
-            if (pAddr) document.getElementById('customerAddress').value = pAddr;
+            // Pre-fill from clientes table using session user id
+            try {
+                const { data: cliente, error: clienteError } = await supabaseClient
+                    .from('clientes')
+                    .select('nombre, telefono, direccion')
+                    .eq('usuario_id', session.user.id)
+                    .single();
+
+                if (\!clienteError && cliente) {
+                    if (cliente.nombre) document.getElementById('customerName').value = cliente.nombre;
+                    if (cliente.telefono) document.getElementById('customerPhone').value = cliente.telefono;
+                    if (cliente.direccion) document.getElementById('customerAddress').value = cliente.direccion;
+                }
+            } catch (prefillErr) {
+                // Non-critical: if pre-fill fails, user can still type manually
+                console.warn('No se pudo precargar datos del cliente:', prefillErr);
+            }
+
+        } catch (err) {
+            console.error('Error verificando sesión en checkout:', err);
+            await veroModal.alert(
+                'Ocurrió un error al verificar tu sesión. Por favor recarga la página e intenta nuevamente.',
+                { type: 'error', title: 'Error de sesión' }
+            );
+            return;
         }
     } else {
         submitOrder();
@@ -437,7 +468,8 @@ function renderRestaurants(restaurants) {
                     <div class="restaurant-image-wrapper">
                         <img src="${r.imagen_url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400'}"
                              alt="${escapeAttr(r.nombre)}"
-                             class="restaurant-image">
+                             class="restaurant-image"
+                             loading="lazy">
                         <div class="restaurant-badges">
                             ${r.calificacion >= 4.7 ? '<span class="badge badge-popular">Popular</span>' : ''}
                             ${isNew(r.created_at) ? '<span class="badge badge-new">Nuevo</span>' : ''}
@@ -547,7 +579,8 @@ async function openRestaurant(id) {
                         <div class="menu-item" style="display: flex; gap: 1rem; align-items: center;">
                             ${item.imagen_url ? `
                                 <img src="${item.imagen_url}" alt="${escapeAttr(item.nombre)}"
-                                     style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+                                     style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;"
+                                     loading="lazy">
                             ` : ''}
                             <div class="menu-item-info" style="flex: 1;">
                                 <div class="menu-item-name">${escapeHtml(item.nombre)}</div>
@@ -709,8 +742,16 @@ function renderTracking(order) {
         </div>
 
         ${order.estado === 'entregado' ? `
-            <div style="text-align:center; padding:1rem;">
-                <button onclick="closeTracking()" class="add-button" style="padding:1rem 2rem; width:100%;">
+            <div style="text-align:center; padding:1rem; display:flex; flex-direction:column; gap:0.75rem;">
+                <button onclick="closeTracking(); rateOrder('${escapeAttr(order.id)}', 'restaurant')" class="add-button" style="padding:1rem 2rem; width:100%;">
+                    \u2B50 Calificar Restaurante
+                </button>
+                ${order.repartidor_id ? `
+                <button onclick="closeTracking(); rateOrder('${escapeAttr(order.id)}', 'driver')" style="padding:1rem 2rem; width:100%; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:50px; font-weight:700; cursor:pointer;">
+                    \uD83D\uDEF5 Calificar Repartidor
+                </button>
+                ` : ''}
+                <button onclick="closeTracking()" style="padding:0.75rem; background:none; border:none; color:var(--gray); cursor:pointer; font-weight:600;">
                     Cerrar
                 </button>
             </div>
@@ -987,13 +1028,116 @@ function getStatusColor(status) {
     }
 }
 
-// Placeholder for Rating
+// ==========================================
+// RATING SYSTEM
+// ==========================================
+let ratingState = { orderId: null, type: null, value: 0 };
+
 async function rateOrder(orderId, type) {
-    const label = type === 'restaurant' ? 'Restaurante' : 'Repartidor';
-    // Simple star rating via confirm flow
-    const rating = window.prompt(`Calificar ${label} (1 - 5):`);
-    if (rating && rating >= 1 && rating <= 5) {
-        await veroModal.alert(`¡Gracias por tu calificación de ${rating} estrellas!`, { type: 'success', title: 'Calificación enviada' });
+    // Check if already rated
+    const { data: existing } = await supabaseClient
+        .from('calificaciones')
+        .select('id, rating_restaurante, rating_repartidor')
+        .eq('pedido_id', orderId)
+        .maybeSingle();
+
+    if (existing) {
+        const field = type === 'restaurant' ? 'rating_restaurante' : 'rating_repartidor';
+        if (existing[field]) {
+            await veroModal.alert('Ya calificaste este pedido.', { type: 'info' });
+            return;
+        }
+    }
+
+    ratingState = { orderId, type, value: 0, existingId: existing?.id || null };
+    const label = type === 'restaurant' ? 'el restaurante' : 'al repartidor';
+
+    const modal = document.getElementById('ratingModal');
+    document.getElementById('ratingTitle').textContent = `Calificar ${label}`;
+    document.getElementById('ratingComment').value = '';
+    renderStars(0);
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function renderStars(selected) {
+    const container = document.getElementById('ratingStars');
+    container.innerHTML = [1, 2, 3, 4, 5].map(i => `
+        <button type="button" onclick="selectStar(${i})" style="background:none; border:none; font-size:2.5rem; cursor:pointer; transition:transform 0.2s; padding:0.25rem; ${i <= selected ? '' : 'opacity:0.3;'}"
+            aria-label="${i} estrella${i > 1 ? 's' : ''}">
+            ${i <= selected ? '\u2B50' : '\u2606'}
+        </button>
+    `).join('');
+    ratingState.value = selected;
+}
+
+function selectStar(n) {
+    renderStars(n);
+}
+
+function closeRatingModal() {
+    document.getElementById('ratingModal').classList.remove('active');
+    document.body.style.overflow = 'auto';
+    ratingState = { orderId: null, type: null, value: 0 };
+}
+
+async function submitRating() {
+    if (ratingState.value === 0) {
+        await veroModal.alert('Selecciona al menos 1 estrella', { type: 'warning' });
+        return;
+    }
+
+    const btn = document.getElementById('btnSubmitRating');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    const field = ratingState.type === 'restaurant' ? 'rating_restaurante' : 'rating_repartidor';
+    const comment = document.getElementById('ratingComment').value.trim();
+
+    try {
+        // Get order details for restaurant/driver IDs
+        const { data: order } = await supabaseClient
+            .from('pedidos')
+            .select('restaurante_id, repartidor_id')
+            .eq('id', ratingState.orderId)
+            .single();
+
+        if (!order) throw new Error('Pedido no encontrado');
+
+        if (ratingState.existingId) {
+            // Update existing rating row
+            const update = { [field]: ratingState.value };
+            if (comment) update.comentario = comment;
+
+            const { error } = await supabaseClient
+                .from('calificaciones')
+                .update(update)
+                .eq('id', ratingState.existingId);
+            if (error) throw error;
+        } else {
+            // Insert new rating
+            const { error } = await supabaseClient
+                .from('calificaciones')
+                .insert({
+                    pedido_id: ratingState.orderId,
+                    cliente_id: window.PROFILE_ID,
+                    restaurante_id: order.restaurante_id,
+                    repartidor_id: order.repartidor_id,
+                    [field]: ratingState.value,
+                    comentario: comment || null
+                });
+            if (error) throw error;
+        }
+
+        closeRatingModal();
+        await veroModal.alert(`Gracias por tu calificacion de ${ratingState.value} estrellas!`, { type: 'success', title: 'Calificacion enviada' });
+
+    } catch (error) {
+        console.error('Error submitting rating:', error);
+        await veroModal.alert('Error enviando calificacion: ' + error.message, { type: 'error' });
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Enviar Calificacion';
     }
 }
 

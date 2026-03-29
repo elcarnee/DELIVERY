@@ -8,9 +8,6 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap"
         rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase-config.js"></script>
-    <script src="js/vero-modal.js"></script>
 
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/components.css">
@@ -259,6 +256,9 @@
 </head>
 
 <body>
+    <!-- Skip Link -->
+    <a href="#main-content" class="skip-link">Saltar al contenido</a>
+
     <header class="header">
         <div class="header-content">
             <div class="logo">
@@ -266,15 +266,15 @@
                     style="font-weight: 400; font-size: 1.2rem; margin-left: 5px; color: var(--gray);">Repartidores</span>
             </div>
             <div class="header-actions">
-                <button class="btn-outline" onclick="openProfile()">
+                <button class="btn-outline" onclick="openProfile()" aria-label="Abrir mi perfil">
                     👤 Mi Perfil
                 </button>
-                <button class="btn-outline" onclick="handleLogout()">
+                <button class="btn-outline" onclick="handleLogout()" aria-label="Cerrar sesion">
                     🚪 Salir
                 </button>
                 <div class="status-toggle">
                     <span id="statusText">Desconectado</span>
-                    <div class="toggle-switch" id="statusToggle" onclick="toggleStatus()">
+                    <div class="toggle-switch" id="statusToggle" onclick="toggleStatus()" role="switch" aria-checked="false" aria-label="Estado de conexion">
                         <div class="toggle-slider"></div>
                     </div>
                 </div>
@@ -282,7 +282,7 @@
         </div>
     </header>
 
-    <div class="container">
+    <main class="container" id="main-content" role="main">
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-value" id="todayDeliveries">0</div>
@@ -302,8 +302,9 @@
             <div class="section-header" style="flex-direction:column; align-items:flex-start; gap:1rem;">
                 <h2 class="section-title">Panel de Entregas</h2>
 
-                <div
-                    style="display:flex; gap:1rem; border-bottom:1px solid rgba(255,255,255,0.1); width:100%; padding-bottom:0.5rem;">
+                <nav
+                    style="display:flex; gap:1rem; border-bottom:1px solid rgba(255,255,255,0.1); width:100%; padding-bottom:0.5rem;"
+                    role="navigation" aria-label="Filtros de entregas">
                     <button id="tabActive" onclick="switchTab('active')"
                         style="background:none; border:none; color:var(--primary); font-weight:bold; padding:0.5rem 1rem; cursor:pointer; border-bottom:2px solid var(--primary);">
                         📍 Activas / Disponibles
@@ -312,7 +313,7 @@
                         style="background:none; border:none; color:var(--gray); font-weight:normal; padding:0.5rem 1rem; cursor:pointer; border-bottom:2px solid transparent;">
                         📜 Historial
                     </button>
-                </div>
+                </nav>
             </div>
 
             <!-- ACTIVE ORDERS CONTAINER -->
@@ -329,10 +330,10 @@
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 
     <!-- Profile Modal -->
-    <div class="modal-overlay" id="profileModal" onclick="if(event.target === this) closeProfile()">
+    <div class="modal-overlay" id="profileModal" onclick="if(event.target === this) closeProfile()" role="dialog" aria-modal="true" aria-label="Mi perfil de repartidor">
         <div class="modal">
             <h2 class="section-title" style="margin-bottom: 1.5rem">Mi Perfil</h2>
             <form id="profileForm" onsubmit="saveProfile(event)">
@@ -372,6 +373,10 @@
         </div>
     </div>
 
+    <!-- Scripts: Supabase CDN first, then config, then modal, then auth, then role-specific -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/vero-modal.js"></script>
     <script src="js/auth-manager.js"></script>
     <script src="js/driver.js"></script>
 </body>

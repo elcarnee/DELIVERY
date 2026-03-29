@@ -8,27 +8,15 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
     <style>
         :root {
-            --vero-dark: #0F172A;
-            --vero-lime: #a3e635;
-            --vero-lime-hover: #84cc16;
-            --white: #ffffff;
             --gray-100: #f1f5f9;
             --gray-400: #94a3b8;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'DM Sans', sans-serif;
-            background-color: var(--vero-dark);
-            color: var(--white);
-            min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
@@ -182,8 +170,10 @@
 </head>
 
 <body>
+    <!-- Skip Link -->
+    <a href="#main-content" class="skip-link">Saltar al contenido</a>
 
-    <nav class="navbar">
+    <nav class="navbar" role="navigation" aria-label="Navegacion principal">
         <div class="logo-container">
             <!-- Using the uploaded logo path logic or text -->
             <span class="logo-text">VERO<span style="color: var(--vero-lime);">.</span></span>
@@ -195,7 +185,7 @@
         </div>
     </nav>
 
-    <main class="hero">
+    <main class="hero" id="main-content" role="main">
         <h1 class="hero-title">
             Delivery de <br>
             <span>Verdad.</span>

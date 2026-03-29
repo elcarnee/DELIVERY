@@ -156,7 +156,7 @@ async function loadDeliveries() {
         }
 
         renderDeliveries();
-        updateStats();
+        await updateStats();
 
     } catch (error) {
         console.error('Error loading deliveries:', error);
@@ -620,9 +620,34 @@ async function loadHistory() {
 // STATS
 // ==========================================
 
-function updateStats() {
-    // Mock stats - In production, load from Supabase
-    document.getElementById('todayDeliveries').textContent = '8';
-    document.getElementById('todayEarnings').textContent = '$12,500';
-    document.getElementById('rating').textContent = '4.8';
+async function updateStats() {
+    if (!REPARTIDOR_ID) return;
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayISO = todayStart.toISOString();
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('pedidos')
+            .select('total')
+            .eq('repartidor_id', REPARTIDOR_ID)
+            .eq('estado', 'entregado')
+            .gte('created_at', todayISO);
+
+        if (error) throw error;
+
+        const todayCount = data ? data.length : 0;
+        const todaySum = data ? data.reduce((sum, row) => sum + (Number(row.total) || 0), 0) : 0;
+
+        document.getElementById('todayDeliveries').textContent = todayCount;
+        document.getElementById('todayEarnings').textContent = '$' + formatPrice(todaySum);
+    } catch (err) {
+        console.error('Error loading stats:', err);
+        document.getElementById('todayDeliveries').textContent = '-';
+        document.getElementById('todayEarnings').textContent = '-';
+    }
+
+    // No ratings table yet - show placeholder
+    document.getElementById('rating').textContent = '-';
 }
