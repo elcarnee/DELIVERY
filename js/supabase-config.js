@@ -7,14 +7,17 @@
 const SUPABASE_URL = 'https://dsxtpgkdxkplwhrvbotg.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzeHRwZ2tkeGtwbHdocnZib3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5NjE2MzcsImV4cCI6MjA4NTUzNzYzN30.nY-PrzOyfmniy_nzZYIq36GWTwcb4ENIchOOA7cbc18';
 
+// Singleton instance
+let _supabaseInstance = null;
+
 /**
- * Creates and returns a configured Supabase client.
- * Uses sessionStorage for session persistence.
+ * Returns the singleton Supabase client, creating it on first call.
  * @returns {object|null} Supabase client instance or null on error
  */
-function createSupabaseClient() {
+function getSupabaseClient() {
+    if (_supabaseInstance) return _supabaseInstance;
     try {
-        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        _supabaseInstance = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
             auth: {
                 persistSession: true,
                 storage: window.sessionStorage,
@@ -22,12 +25,23 @@ function createSupabaseClient() {
                 detectSessionInUrl: true
             }
         });
-        return client;
+        return _supabaseInstance;
     } catch (error) {
-        console.error('❌ Supabase init failed:', error);
+        console.error('Supabase init failed:', error);
         return null;
     }
 }
+
+/** @deprecated Use getSupabaseClient() - kept for backward compat */
+function createSupabaseClient() {
+    return getSupabaseClient();
+}
+
+// Auto-init global reference
+Object.defineProperty(window, 'supabaseClient', {
+    get() { return getSupabaseClient(); },
+    configurable: true
+});
 
 /**
  * Utility: Format price for AR locale
