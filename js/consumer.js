@@ -424,14 +424,8 @@ async function loadRestaurants() {
 
             if (error) throw error;
 
-            // SMART UPDATE: Only re-render if data actually changed
-            const currentIds = allRestaurants.map(r => r.id + r.acepta_pedidos).join(',');
-            const newIds = data.map(r => r.id + r.acepta_pedidos).join(',');
-
-            if (currentIds !== newIds) {
-                allRestaurants = data;
-                renderRestaurants(allRestaurants);
-            }
+            allRestaurants = data || [];
+            renderRestaurants(allRestaurants);
 
         } catch (error) {
             console.error('Error cargando restaurantes:', error);
@@ -475,21 +469,21 @@ function renderRestaurants(restaurants) {
                             ${isNew(r.created_at) ? '<span class="badge badge-new">Nuevo</span>' : ''}
                         </div>
                         <div class="restaurant-rating">
-                            ⭐ ${r.calificacion.toFixed(1)}
+                            ⭐ ${(r.calificacion || 0).toFixed(1)}
                         </div>
                     </div>
                     <div class="restaurant-info">
                         <h3 class="restaurant-name">${escapeHtml(r.nombre)}</h3>
-                        <p class="restaurant-category">${escapeHtml(r.descripcion || r.categoria)}</p>
+                        <p class="restaurant-category">${escapeHtml(r.descripcion || r.categoria || '')}</p>
                         <div class="restaurant-meta">
                             <span class="meta-item">
                                 🕒 ${escapeHtml(r.horarios || 'Consultar')}
                             </span>
                             <span class="meta-item">
-                                🕐 ${r.tiempo_preparacion} min
+                                🕐 ${r.tiempo_preparacion || '?'} min
                             </span>
                             <span class="meta-item">
-                                🛵 $${r.costo_envio}
+                                🛵 $${r.costo_envio || 0}
                             </span>
                             <span class="meta-item">
                                 📍 <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.direccion || r.zona)}" target="_blank" style="color:inherit; text-decoration:none; hover:underline;">
