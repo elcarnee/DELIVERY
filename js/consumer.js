@@ -420,7 +420,6 @@ async function loadRestaurants() {
                 .from('restaurantes')
                 .select('*')
                 .eq('activo', true)
-                .eq('acepta_pedidos', true)
                 .order('calificacion', { ascending: false });
 
             if (error) throw error;
@@ -464,13 +463,14 @@ function renderRestaurants(restaurants) {
     container.innerHTML = `
         <div class="restaurants-grid">
             ${restaurants.map((r, i) => `
-                <div class="restaurant-card" style="--delay: ${i * 0.05}s" onclick="openRestaurant('${escapeAttr(r.id)}')">
+                <div class="restaurant-card" style="--delay: ${i * 0.05}s; ${!r.acepta_pedidos ? 'opacity:0.5;' : ''}" onclick="openRestaurant('${escapeAttr(r.id)}')">
                     <div class="restaurant-image-wrapper">
                         <img src="${r.imagen_url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400'}"
                              alt="${escapeAttr(r.nombre)}"
                              class="restaurant-image"
                              loading="lazy">
                         <div class="restaurant-badges">
+                            ${!r.acepta_pedidos ? '<span class="badge" style="background:var(--danger);color:white;">Cerrado</span>' : ''}
                             ${r.calificacion >= 4.7 ? '<span class="badge badge-popular">Popular</span>' : ''}
                             ${isNew(r.created_at) ? '<span class="badge badge-new">Nuevo</span>' : ''}
                         </div>
