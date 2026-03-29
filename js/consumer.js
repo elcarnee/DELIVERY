@@ -269,7 +269,7 @@ async function proceedToCheckout() {
                     .eq('usuario_id', session.user.id)
                     .single();
 
-                if (\!clienteError && cliente) {
+                if (!clienteError && cliente) {
                     if (cliente.nombre) document.getElementById('customerName').value = cliente.nombre;
                     if (cliente.telefono) document.getElementById('customerPhone').value = cliente.telefono;
                     if (cliente.direccion) document.getElementById('customerAddress').value = cliente.direccion;
