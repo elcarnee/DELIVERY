@@ -246,7 +246,7 @@ async function proceedToCheckout() {
         try {
             const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
 
-            if (sessionError || \!session) {
+            if (sessionError || !session) {
                 const goToLogin = await veroModal.confirm(
                     'Debes iniciar sesión para realizar un pedido. ¿Quieres ir a la página de login?',
                     { type: 'warning', title: 'Sesión requerida' }
